@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+*.nshc
+report.html
+report.json
+.pytest_cache/
+build/
+dist/
+release/
+*.exe

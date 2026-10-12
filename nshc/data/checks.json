@@ -1,0 +1,1783 @@
+{
+  "checks": [
+    {
+      "id": "nshc000001",
+      "platforms": [
+        "SDX",
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "System",
+      "title": "Upgrade NetScaler firmware to a current version",
+      "details": "NetScaler version 13.0 has reached End of Life (EOL) in July 2024.",
+      "resources": [
+        "https://www.citrix.com/support/product-lifecycle/product-matrix.html"
+      ],
+      "likelihood": 3,
+      "impact": 3,
+      "wording": "NetScaler 13.0 reached EOL in July 2024, ending support and security updates. Upgrade to latest 13.1 or 14.1 version of code to maintain security, compliance, and performance."
+    },
+    {
+      "id": "nshc000002",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "System",
+      "title": "Disable NetScaler L3 Mode",
+      "details": "With Layer 3 (L3) mode enabled, NetScaler performs packet forwarding and acts as a router within the network. In most deployments, this behavior is not desired, and it is recommended to disable L3 mode unless explicitly required.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/citrix-adc/current-release/getting-started-with-citrix-adc/configure-system-settings/configure-modes-packet-forwarding.html"
+      ],
+      "likelihood": 2,
+      "impact": 3,
+      "wording": "NetScaler's L3 mode enables packet forwarding, which can introduce security risks by bypassing firewall rules. Since it is enabled by default, review your deployment and disable it, unless explicitly required, to prevent unauthorized cross-network access."
+    },
+    {
+      "id": "nshc000003",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "System",
+      "title": "Disable NetScaler L2 Mode",
+      "details": "When Layer 2 (L2) mode is enabled, NetScaler acts as a bridge in the network, forwarding all Layer 2 traffic, similar to a switch. In most deployments, this behavior is not desired, and it is recommended to disable L2 mode unless specifically required.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/citrix-adc/current-release/getting-started-with-citrix-adc/configure-system-settings/configure-modes-packet-forwarding.html"
+      ],
+      "likelihood": 1,
+      "impact": 3,
+      "wording": "NetScaler\u2019s L2 mode functions as a bridge, forwarding all Layer 2 traffic, which can introduce unnecessary traffic and security risks. Since it is disabled by default, review your deployment and ensure it is only enabled if explicitly required."
+    },
+    {
+      "id": "nshc000004",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "System",
+      "title": "Disable NetScaler EDGE Mode",
+      "details": "Edge mode enables the NetScaler ADC to dynamically learn details about back-end servers, particularly in configurations like link load balancing. However, if your deployment does not require Edge mode, it is recommended to disable it to minimize unnecessary functionality and potential risks.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/citrix-adc/current-release/citrix-adc-cache-redirection-gen-wrapper-10-con/cache-redirection-config/configure-transparent-redirection/configure-edge-mode.html"
+      ],
+      "likelihood": 2,
+      "impact": 1,
+      "wording": "Edge mode allows NetScaler to learn backend server details dynamically but is rarely needed outside specific configurations like link load balancing. Since it is enabled by default, review your setup and disable it unless explicitly required, to reduce unnecessary functionality and potential risks."
+    },
+    {
+      "id": "nshc000005",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "System",
+      "title": "Disable NetScaler MBF Mode",
+      "details": "MAC-Based Forwarding (MBF) allows the NetScaler to bypass its routing table and send replies to the MAC address from which the traffic was received. While MBF is crucial for certain implementations, it can introduce complexity and obscure traffic flow visibility in the configuration.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/citrix-adc/current-release/networking/interfaces/configuring-mac-based-forwarding.html"
+      ],
+      "likelihood": 2,
+      "impact": 2,
+      "wording": "MBF bypasses the routing table for return traffic, complicating traffic analysis and potentially masking misconfigurations. Unless explicitly required, disable MBF to improve visibility and control. However, for Cloud VPX deployments, MBF is required and should remain enabled. Assess network impact before making changes."
+    },
+    {
+      "id": "nshc000006",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "System",
+      "title": "Disable NetScaler SP Feature",
+      "details": "Surge Protection allows the NetScaler to queue connections when backend servers are slow to respond, preventing them from becoming overloaded. While this feature can be useful, it consumes significant memory resources on the NetScaler. If the appliance runs out of memory, it may stop processing traffic and, in extreme cases, crash.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/citrix-adc/current-release/security/surge-protection"
+      ],
+      "likelihood": 1,
+      "impact": 3,
+      "wording": "Surge Protection helps queue connections but consumes significant memory, potentially leading to instability or crashes. Enable it only when needed and ensure the NetScaler is properly sized. If used, apply it selectively to avoid unnecessary resource consumption."
+    },
+    {
+      "id": "nshc000007",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "System",
+      "title": "Disable NetScaler WL Feature",
+      "details": "The Web Logging feature enables NetScaler to send client access logs for load-balanced web services to an external log server, formatted similarly to Apache HTTP access logs. This centralizes logs for a service on the log server, rather than maintaining individual logs on each web server.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/citrix-adc/current-release/system/web-server-logging"
+      ],
+      "likelihood": 1,
+      "impact": 1,
+      "wording": "Web Logging centralizes client access logs but requires a properly configured web log server. If no web log server is set up, disable this feature to prevent unnecessary resource usage."
+    },
+    {
+      "id": "nshc000008",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "System",
+      "title": "Single point of failure",
+      "details": "The current NetScaler deployment is a Standalone appliance, meaning if this appliance becomes unavailable, all hosted services will be inaccessible. This configuration represents a single point of failure and poses a significant risk to service continuity.",
+      "resources": [
+        "https://docs.citrix.com/en-us/citrix-adc/current-release/system/high-availability-introduction/configuring-high-availability.html"
+      ],
+      "likelihood": 1,
+      "impact": 3,
+      "wording": "A standalone NetScaler creates a single point of failure, risking service disruption. Deploying an additional appliance or instance and configuring HA, enhances uptime, ensures seamless failover, and improves resilience against failures."
+    },
+    {
+      "id": "nshc000009",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "System",
+      "title": "Enable Failsafe for High-Availability",
+      "details": "Fail-safe mode ensures that one node in a high availability pair is always designated as primary, even when both nodes fail their health checks. This mode activates backup mechanisms when a node is partially available, allowing traffic to be handled effectively.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/citrix-adc/current-release/system/high-availability-introduction/configuring-fail-safe-high-availability.html"
+      ],
+      "likelihood": 2,
+      "impact": 3,
+      "wording": "Fail-safe mode ensures that one node in an HA pair is always designated as primary, preventing a split-brain scenario. Enable this mode to maintain predictable failover behavior and avoid network disruptions. Note that the FailSafe feature must be enabled individually, on each node."
+    },
+    {
+      "id": "nshc000010",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "System",
+      "title": "Set HA failover maximum flips (only if route monitors are enabled)",
+      "details": "In an HA configuration in non-INC mode, if route monitors fail on both nodes, failover happens every 180 seconds until one of the nodes is able to reach all of the routes monitored by the respective route monitors.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/citrix-adc/current-release/system/high-availability-introduction/limiting-failovers-high-availability.html"
+      ],
+      "likelihood": 2,
+      "impact": 3,
+      "wording": "To avoid excessive failovers and ensure stable HA operation, set appropriate values for HA maxFlips and HA maxFlipsTime. These settings limit the number of failovers within a specified time period, preventing service interruptions."
+    },
+    {
+      "id": "nshc000011",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "System",
+      "title": "Set HA failover maximum flip time (only if route monitors are enabled)",
+      "details": "In an HA configuration in non-INC mode, if route monitors fail on both nodes, failover happens every 180 seconds until one of the nodes is able to reach all of the routes monitored by the respective route monitors.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/citrix-adc/current-release/system/high-availability-introduction/limiting-failovers-high-availability.html"
+      ],
+      "likelihood": 2,
+      "impact": 3,
+      "wording": "To prevent excessive failovers and maintain HA stability, configure the HA maxFlips and HA maxFlipsTime settings. These settings control the maximum number of failovers allowed within a specified time, reducing service interruptions."
+    },
+    {
+      "id": "nshc000012",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Monitoring",
+      "title": "HA monitoring is disabled on the interface",
+      "details": "When HA monitoring is disabled on one or more interfaces, the NetScaler might fail to detect issues and failover to the other HA node. This can result in service disruption, dues to services being unavailable.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/citrix-adc/current-release/getting-started-with-citrix-adc/configure-ha-first-time.html#disable-high-availability-monitoring-for-unused-interfaces"
+      ],
+      "likelihood": 1,
+      "impact": 3,
+      "wording": "Disabling HA monitoring on interfaces prevents proper failover detection, risking service disruption. Ensure HA monitoring is enabled on all critical interfaces to allow seamless failover and minimize traffic disruption during failures."
+    },
+    {
+      "id": "nshc000013",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Monitoring",
+      "title": "Configure a remote/external syslog server",
+      "details": "For improved retention and redundancy, it is highly recommended to configure the NetScaler to send audit logs to an external syslog server. This setup ensures that logs are securely stored and can be analyzed later, helping with troubleshooting, compliance, and historical data retention.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/citrix-adc/current-release/system/audit-logging/configuring-audit-logging.html"
+      ],
+      "likelihood": 3,
+      "impact": 2,
+      "wording": "To enhance log retention and redundancy, configure NetScaler to send audit logs to an external syslog server. This ensures secure log storage, protects against local storage issues, and enables centralized log management for troubleshooting, compliance, and historical data retention."
+    },
+    {
+      "id": "nshc000014",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Monitoring",
+      "title": "Configure generic SNMP traps",
+      "details": "NetScaler should be configured to send generic SNMP traps to designated trap listeners. This allows for proactive monitoring and alerts on various system events, ensuring that network administrators are notified of critical issues as they arise.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/citrix-adc/current-release/getting-started-with-citrix-adc/configure-system-settings/configure-snmp.html"
+      ],
+      "likelihood": 2,
+      "impact": 2,
+      "wording": "To enable proactive monitoring, configure NetScaler to send generic SNMP traps to designated trap listeners. This provides real-time alerts on system events, helping identify and resolve issues quickly, and centralizes monitoring for efficient network management."
+    },
+    {
+      "id": "nshc000015",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Monitoring",
+      "title": "Configure specific SNMP traps",
+      "details": "NetScaler should be configured to send specific SNMP traps to designated trap listeners for targeted monitoring and alerting. This enables administrators to receive notifications on particular events or conditions that require attention, improving operational visibility and response times.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/citrix-adc/current-release/getting-started-with-citrix-adc/configure-system-settings/configure-snmp.html"
+      ],
+      "likelihood": 2,
+      "impact": 2,
+      "wording": "Set up NetScaler to send specific SNMP traps to designated listeners based on your network's monitoring needs. This allows for real-time alerts on critical events, improving operational visibility, response times, and efficient troubleshooting tailored to your environment."
+    },
+    {
+      "id": "nshc000016",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Monitoring",
+      "title": "Configure Minimum Recommended SNMP alert thresholds for CPU utilization",
+      "details": "By default, SNMP alert thresholds for CPU are not configured on NetScaler.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/citrix-adc/current-release/system/snmp/generating-snmp-traps-on-citrix-adc.html"
+      ],
+      "likelihood": 3,
+      "impact": 1,
+      "wording": "By setting SNMP alert thresholds for CPU usage, you ensure that critical conditions trigger notifications, allowing for early intervention. This helps prevent performance degradation or system failures, improving business continuity and proactive issue management."
+    },
+    {
+      "id": "nshc000017",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Monitoring",
+      "title": "Configure Minimum Recommended SNMP alert thresholds for Memory utilization",
+      "details": "By default, SNMP alert thresholds for memory usage are not configured on NetScaler. It is strongly recommended to set up memory utilization alarms to monitor system performance effectively.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/citrix-adc/current-release/system/snmp/generating-snmp-traps-on-citrix-adc.html"
+      ],
+      "likelihood": 3,
+      "impact": 1,
+      "wording": "Set up SNMP alert thresholds for memory usage to detect critical conditions early. This ensures timely notifications, enabling proactive management to prevent performance issues, service interruptions, or system crashes."
+    },
+    {
+      "id": "nshc000018",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Monitoring",
+      "title": "Configure Minimum Recommended SNMP alert thresholds for Disk utilization",
+      "details": "By default, SNMP alert thresholds for disk space usage are not configured on NetScaler. It is highly recommended to set up disk space utilization alarms to ensure system reliability and avoid potential service disruptions.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/citrix-adc/current-release/system/snmp/generating-snmp-traps-on-citrix-adc.html"
+      ],
+      "likelihood": 3,
+      "impact": 1,
+      "wording": "Set up SNMP alert thresholds for disk space usage to detect critical storage issues early. This ensures timely notifications, allowing for proactive management to prevent service disruptions and maintain system reliability."
+    },
+    {
+      "id": "nshc000019",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Monitoring",
+      "title": "Configure Minimum Recommended SNMP alert thresholds for Pooled license failure",
+      "details": "By default, an SNMP alert for Pooled Licensing Checkout Failure is not configured on NetScaler. It is recommended to set up this alert to monitor and address licensing issues proactively.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/citrix-adc/current-release/system/snmp/generating-snmp-traps-on-citrix-adc.html"
+      ],
+      "likelihood": 3,
+      "impact": 1,
+      "wording": "Set up an SNMP alert for Pooled Licensing Checkout Failure to detect licensing issues early. This ensures prompt notifications and allows for timely resolution, preventing service disruptions and ensuring continuous functionality of licensed services."
+    },
+    {
+      "id": "nshc000020",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Monitoring",
+      "title": "Configure Minimum Recommended SNMP alert thresholds for Pooled license grace period",
+      "details": "SNMP alert for Pooled Licensing on Grace Period has not been configured. It is recommended to set up this alert to monitor and address licensing issues proactively.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/citrix-adc/current-release/system/snmp/generating-snmp-traps-on-citrix-adc.html"
+      ],
+      "likelihood": 3,
+      "impact": 1,
+      "wording": "Set up an SNMP alert for Pooled Licensing in Grace Period to monitor licensing status. This ensures prompt notifications and enables timely resolution of licensing issues, preventing potential service disruptions."
+    },
+    {
+      "id": "nshc000021",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Monitoring",
+      "title": "Configure Minimum Recommended SNMP alert thresholds for Pooled license partial failure",
+      "details": "SNMP alert for Pooled Licensing being Partially allocated has not been configured. It is recommended to set up this alert to monitor and address licensing issues proactively.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/citrix-adc/current-release/system/snmp/generating-snmp-traps-on-citrix-adc.html"
+      ],
+      "likelihood": 3,
+      "impact": 1,
+      "wording": "Set up an SNMP alert for Pooled Licensing when it is partially allocated to monitor licensing status. This ensures prompt notifications and allows for timely resolution of licensing issues, preventing service disruptions."
+    },
+    {
+      "id": "nshc000022",
+      "platforms": [
+        "SDX",
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Monitoring",
+      "title": "Use SNMP version 3, instead of v1 or v2.",
+      "details": "The SNMP agent on the NetScaler supports SNMP versions 1, 2, and 3. However, it is strongly recommended to use SNMP version 3 for secure monitoring and management.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/citrix-adc/current-release/getting-started-with-citrix-adc/configure-system-settings/configure-snmp.html"
+      ],
+      "likelihood": 2,
+      "impact": 2,
+      "wording": "To ensure secure monitoring and management, configure NetScaler to use SNMP version 3. It provides authentication and encryption, protecting sensitive data and preventing unauthorized access, addressing vulnerabilities in SNMP v1 and v2."
+    },
+    {
+      "id": "nshc000023",
+      "platforms": [
+        "SDX",
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Security (Management Access)",
+      "title": "Disable external authentication for the nsroot account",
+      "details": "The nsroot account is the default administrative account on NetScaler, and it should not be configured to allow external authentication, for security reasons.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/citrix-adc/current-release/system/authentication-and-authorization-for-system-user/user-account-and-password-management.html"
+      ],
+      "likelihood": 1,
+      "impact": 3,
+      "wording": "To enhance security, please disable external authentication for the nsroot account. This prevents unauthorized access by ensuring that no malicious actors can bypass local controls and gain full administrative privileges on NetScaler."
+    },
+    {
+      "id": "nshc000024",
+      "platforms": [
+        "SDX",
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Security",
+      "title": "Define a specific local user account on NetScaler Console for communication with the NetScaler",
+      "details": "For enhanced security and auditing, it is recommended to configure a dedicated local user account specifically for communication between the NetScaler appliance and NetScaler Console.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/netscaler-application-delivery-management-software/current-release/access-control/role-based-access-control/rbac-configuring-roles"
+      ],
+      "likelihood": 2,
+      "impact": 2,
+      "wording": "For enhanced security and auditing, configure a dedicated local user account for communication between the NetScaler appliance and NetScaler Console. This isolates the account, improves monitoring, and minimizes potential security risks, ensuring stricter controls without affecting other administrative activities."
+    },
+    {
+      "id": "nshc000025",
+      "platforms": [
+        "SDX",
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Security",
+      "title": "Set SNMP manager IP(s)",
+      "details": "To enhance security and minimize the risk of unauthorized access, it is recommended to configure the NetScaler to respond to SNMP queries only from trusted hosts or networks.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/citrix-adc/current-release/getting-started-with-citrix-adc/configure-system-settings/configure-snmp.html"
+      ],
+      "likelihood": 2,
+      "impact": 2,
+      "wording": "Enhance security by configuring NetScaler to respond to SNMP queries only from trusted IP addresses or networks. This limits access to sensitive information, prevents unauthorized access, and ensures compliance with best practices and regulatory security standards."
+    },
+    {
+      "id": "nshc000026",
+      "platforms": [
+        "SDX",
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Security (Management Access)",
+      "title": "Set CLI prompt for management sessions",
+      "details": "When administrators manage multiple NetScaler appliances simultaneously through SSH sessions, it can be challenging to differentiate between open sessions. Customizing the CLI prompt is a practical solution to improve session clarity and reduce the risk of misconfigurations.",
+      "resources": [
+        "https://developer-docs.netscaler.com/en-us/adc-command-reference-int/current-release/cli/cli-prompt.html"
+      ],
+      "likelihood": 2,
+      "impact": 2,
+      "wording": "To avoid misconfigurations and enhance session clarity, customize the CLI prompt on each NetScaler appliance. Include key information such as the username (%u), hostname (%h), and HA status (%s) to easily identify and manage multiple SSH sessions."
+    },
+    {
+      "id": "nshc000027",
+      "platforms": [
+        "SDX",
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Security (Management Access)",
+      "title": "Configure strong local passwords on NetScaler - Minimum password length",
+      "details": "Properly defined password parameters ensure that local accounts are protected against unauthorized access.",
+      "resources": [
+        "https://support.citrix.com/external/article?articleUrl=CTX233298-how-to-enforce-password-complexity-on-netscaler&language=en_US"
+      ],
+      "likelihood": 1,
+      "impact": 1,
+      "wording": "Ensure local accounts are protected by configuring the NetScaler to enforce a minimum password length and require complex passwords, including numbers, symbols, and a mix of upper- and lower-case letters. Regularly review and update the password policy to maintain alignment with security best practices."
+    },
+    {
+      "id": "nshc000028",
+      "platforms": [
+        "SDX",
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Security (Management Access)",
+      "title": "Configure strong local passwords on NetScaler",
+      "details": "To strengthen the security posture of the NetScaler appliance, it is essential to enforce robust local password policies. Properly defined password parameters ensure that local accounts are protected against unauthorized access.",
+      "resources": [
+        "https://support.citrix.com/external/article?articleUrl=CTX233298-how-to-enforce-password-complexity-on-netscaler&language=en_US"
+      ],
+      "likelihood": 1,
+      "impact": 1,
+      "wording": "Strengthen NetScaler's security by configuring it to enforce password complexity for local accounts. This ensures that passwords are strong and resistant to unauthorized access, helping protect against potential security threats."
+    },
+    {
+      "id": "nshc000029",
+      "platforms": [
+        "SDX",
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Security (Management Access)",
+      "title": "Configure strong local passwords on NetScaler - Force password change",
+      "details": "To enhance the security posture of the NetScaler appliance, it is essential to enforce strong local password policies and ensure that passwords are regularly updated. This can be achieved by configuring NetScaler to require a password change for local accounts while adhering to defined security parameters.",
+      "resources": [
+        "https://support.citrix.com/external/article?articleUrl=CTX233298-how-to-enforce-password-complexity-on-netscaler&language=en_US"
+      ],
+      "likelihood": 1,
+      "impact": 1,
+      "wording": "Enhance NetScaler's security by configuring it to enforce strong password policies and require regular password changes for all local accounts. This ensures that local accounts remain protected against unauthorized access and aligns with best security practices."
+    },
+    {
+      "id": "nshc000030",
+      "platforms": [
+        "SDX",
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Security (Management Access)",
+      "title": "Avoid keeping the management IP (NSIP) at its default settings.",
+      "details": "Default configuration for management access on NSIP is not secured by default and should be configured.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/citrix-adc/current-release/networking/ip-addressing/configuring-citrix-adc-owned-ip-addresses/configuring-citrix-adc-ip-address.html"
+      ],
+      "likelihood": 2,
+      "impact": 3,
+      "wording": "To enhance security, configure the NSIP management access by disabling FTP and Telnet, and enabling secure access only."
+    },
+    {
+      "id": "nshc000031",
+      "platforms": [
+        "SDX",
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Security (Management Access)",
+      "title": "Enable Secure Access Only on NetScaler management IP",
+      "details": "To enhance the security of the NetScaler appliance, it is strongly recommended to enable SecureOnly access on all management IP addresses. This ensures that all communication with the NetScaler management interfaces is encrypted and only accessible over port 443 using SSL certificates.",
+      "resources": [
+        "https://support.citrix.com/external/article?articleUrl=CTX205264-how-do-i-set-up-secure-access-to-netscaler-management-gui&language=en_US"
+      ],
+      "likelihood": 2,
+      "impact": 3,
+      "wording": "To enhance security, enable SecureOnly access on both management NSIP and management SNIP. This ensures all communication is encrypted and accessible only over port 443 using SSL certificates."
+    },
+    {
+      "id": "nshc000032",
+      "platforms": [
+        "SDX",
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Security (Management Access)",
+      "title": "Block access to non-management applications on management IP",
+      "details": "The NSIP (NetScaler IP) is dedicated to management traffic and should not serve non-management applications to maintain security.",
+      "resources": [
+        "https://support.citrix.com/s/article/CTX126736-how-to-restrict-access-to-netscaler-owned-ip-addresses-only-from-the-management-applications?language=en_US"
+      ],
+      "likelihood": 2,
+      "impact": 3,
+      "wording": "To maintain security, configure the NSIP to only allow management traffic and disable non-management services. This reduces the risk of unauthorized access and attacks. Thoroughly test the setup to avoid disrupting legitimate management access."
+    },
+    {
+      "id": "nshc000033",
+      "platforms": [
+        "SDX",
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Security (Management Access)",
+      "title": "Disable telnet on management IP",
+      "details": "Telnet is an insecure protocol as it transmits data, including credentials, in plain text, making it vulnerable to interception.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/citrix-adc/current-release/networking/ip-addressing/configuring-citrix-adc-owned-ip-addresses/configuring-citrix-adc-ip-address.html"
+      ],
+      "likelihood": 2,
+      "impact": 3,
+      "wording": "To protect management sessions, disable Telnet entirely and use SSH instead, as it provides encryption and secure authentication. Ensure the configuration is applied to both nodes in the HA pair to eliminate the risk of using Telnet unintentionally."
+    },
+    {
+      "id": "nshc000034",
+      "platforms": [
+        "SDX",
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Security (Management Access)",
+      "title": "Disable FTP on management IP",
+      "details": "FTP is an insecure as it transmits data, including credentials, in plain text, making it vulnerable to interception.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/citrix-adc/current-release/networking/ip-addressing/configuring-citrix-adc-owned-ip-addresses/configuring-citrix-adc-ip-address.html"
+      ],
+      "likelihood": 2,
+      "impact": 3,
+      "wording": "To enhance security, disable FTP on the NSIP and switch to SCP (Secure Copy Protocol) for encrypted file transfers. This ensures that sensitive data, including credentials, is not transmitted in plain text. Apply the configuration to both nodes in the HA pair to maintain consistent security settings."
+    },
+    {
+      "id": "nshc000035",
+      "platforms": [
+        "SDX",
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Security (Management Access)",
+      "title": "Enable SNMP on management IP",
+      "details": "SNMP enables monitoring of the NetScaler for performance, health, and operational metrics.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/citrix-adc/current-release/networking/ip-addressing/configuring-citrix-adc-owned-ip-addresses/configuring-citrix-adc-ip-address.html"
+      ],
+      "likelihood": 2,
+      "impact": 3,
+      "wording": "For effective monitoring of NetScaler performance, health, and operational metrics, enable SNMP on the NSIP. Ensure SNMPv3 is used for encrypted and authenticated communication. Limit SNMP access to trusted sources to prevent unauthorized access, and apply this configuration to both nodes in the HA pair for consistent monitoring setup."
+    },
+    {
+      "id": "nshc000036",
+      "platforms": [
+        "SDX",
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Security (Management Access)",
+      "title": "Set session timeout value for management sessions",
+      "details": "Configure session timeout to comply with security standards by disconnecting idle management sessions.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/netscaler-gateway/current-release/vpn-user-config/configure-plugin-connections/configure-time-out-settings.html"
+      ],
+      "likelihood": 1,
+      "impact": 3,
+      "wording": "To comply with security standards, configure the session timeout to 10 minutes (600 seconds) to automatically disconnect idle management sessions. This reduces the risk of unauthorized access due to forgotten or inactive sessions."
+    },
+    {
+      "id": "nshc000037",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Security",
+      "title": "Enable NetScaler Cookie version 1",
+      "details": "Version 0 and version 1 cookies handle expiry times differently, with version 0 using an absolute UTC time and version 1 using a relative time.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/citrix-adc/current-release/getting-started-with-citrix-adc/configure-system-settings/configuring-system-settings.html"
+      ],
+      "likelihood": 1,
+      "impact": 1,
+      "wording": "Enable cookie version 1 for more reliable handling of expiry times, as it uses relative expiry times that are less affected by time discrepancies between the NetScaler and client systems. Additionally, ensure that system clocks on both the NetScaler and client machines are synchronized to avoid potential issues."
+    },
+    {
+      "id": "nshc000038",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Security",
+      "title": "Enable NetScaler HTTP parameter: dropInvalReqs",
+      "details": "Invalid HTTP requests that don\u2019t meet strict protocol checks or have incomplete headers are forwarded to back-end servers by default.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/citrix-adc/current-release/system/http-configurations.html"
+      ],
+      "likelihood": 1,
+      "impact": 2,
+      "wording": "To enhance security and reduce unnecessary load on back-end servers, configure NetScaler to drop or block invalid HTTP requests that fail protocol checks or have incomplete headers. This prevents potentially harmful or malformed traffic from reaching the servers and helps maintain system integrity."
+    },
+    {
+      "id": "nshc000039",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Security",
+      "title": "Enable NetScaler HTTP parameter: markHttp09Inval",
+      "details": "The HTTP/0.9 specification allows resources to be accessed using a single GET request. Resources returned have neither a content-type or a content-length header.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/citrix-adc/current-release/system/http-configurations.html"
+      ],
+      "likelihood": 1,
+      "impact": 1,
+      "wording": "To avoid potential security risks and ensure compatibility with modern content inspection systems, disable HTTP/0.9 and mark any HTTP/0.9 requests as invalid. Since this protocol has not been widely used for over 20 years, disabling it presents minimal risk while improving security and traffic handling."
+    },
+    {
+      "id": "nshc000040",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Security",
+      "title": "Enable NetScaler HTTP parameter: markConnReqInval",
+      "details": "HTTP CONNECT requests are typically used for establishing a tunnel to an HTTPS forward proxy, which can be a security risk if not controlled.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/citrix-adc/current-release/system/http-configurations.html"
+      ],
+      "likelihood": 1,
+      "impact": 1,
+      "wording": "To prevent potential security risks, invalidate all HTTP CONNECT requests globally. If these types of connection are required, create a specific HTTP profile to allow CONNECT requests only for services that are explicitly used as HTTPS forward proxies. This approach helps control and secure the use of HTTP CONNECT while limiting unnecessary access."
+    },
+    {
+      "id": "nshc000041",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Security",
+      "title": "Enable NetScaler TCP parameter: window scaling",
+      "details": "TCP window scaling increases the receive window size when the bandwidth-delay product exceeds 64K, improving performance in high-latency or high-bandwidth networks.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/citrix-adc/current-release/system/tcp-configurations.html"
+      ],
+      "likelihood": 1,
+      "impact": 2,
+      "wording": "For optimal performance in high-latency or high-bandwidth networks, it is recommended to keep TCP window scaling enabled. This feature improves throughput by adjusting the receive window size, allowing for more efficient data transmission."
+    },
+    {
+      "id": "nshc000042",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Security",
+      "title": "Enable NetScaler TCP parameter: SACK",
+      "details": "TCP SACK enables retransmission of only the lost packets in case of multiple dropped segments, improving efficiency in handling packet loss.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/citrix-adc/current-release/system/tcp-configurations.html"
+      ],
+      "likelihood": 1,
+      "impact": 2,
+      "wording": "Ensure that TCP SACK (Selective Acknowledgment) is enabled if TCP window scaling is active, as it improves retransmission efficiency by retransmitting only the lost packets. This is particularly beneficial in high-latency or high-loss networks."
+    },
+    {
+      "id": "nshc000043",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Security",
+      "title": "Change NetScaler SSL parameter: denySSLReneg",
+      "details": "SSL renegotiation allows the handshake process to occur over an established SSL connection, enabling the re-establishment of secure sessions with updated ciphers and keys.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/citrix-adc/current-release/ssl/ssl-profiles/ssl-enabling-the-default-profile.html#ssl-profile-parameters"
+      ],
+      "likelihood": 2,
+      "impact": 2,
+      "wording": "On the SSL Profile, disable non-secure SSL renegotiation to prevent vulnerabilities such as SSL renegotiation attacks. This ensures that only clients supporting RFC 5746 (secure renegotiation) are allowed, enhancing security and achieving higher SSL-labs ratings."
+    },
+    {
+      "id": "nshc000044",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Security",
+      "title": "Change NetScaler SSL parameter: defaultProfile",
+      "details": "SSL default profiles enforce a uniform SSL configuration across all services and virtual servers on the NetScaler, making individual SSL settings unavailable.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/citrix-adc/current-release/ssl/ssl-profiles/ssl-enabling-the-default-profile.html"
+      ],
+      "likelihood": 2,
+      "impact": 3,
+      "wording": "Before enabling SSL default profiles, ensure that all services and virtual servers are bound to appropriate SSL profiles. This will prevent the loss of individual SSL settings, as SSL default profiles enforce uniform SSL configurations across the appliance. Enabling this feature will help ensure consistent SSL settings and align with the direction of deprecating individual SSL configurations at the object level."
+    },
+    {
+      "id": "nshc000045",
+      "platforms": [
+        "SDX",
+        "MPX"
+      ],
+      "focus": "System",
+      "title": "Enable HA monitoring for LACP channels",
+      "details": "HA monitoring must be enabled on the LACP channel itself to ensure accurate state reporting for all links in the aggregated connection.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/citrix-adc/current-release/networking/interfaces/configuring-link-aggregation.html"
+      ],
+      "likelihood": 1,
+      "impact": 3,
+      "wording": "To ensure accurate state reporting for all links in the aggregated connection, enable HA monitoring on the LACP channel. This will ensure that the entire link aggregation is marked DOWN when all links fail. Verify the monitoring setup to ensure that it accurately reflects the status of the aggregated links, which is crucial for reliable network performance and throughput."
+    },
+    {
+      "id": "nshc000046",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "System",
+      "title": "Set Relay State rule in SAML action",
+      "details": "NetScaler can act as a SAML IdP (Identity Provider), SP (Service Provider), or both. Incorrect or outdated configurations can expose the system to risks, such as session hijacking.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/citrix-adc/current-release/aaa-tm/authentication-methods/saml-authentication/citrix-adc-saml-sp.html"
+      ],
+      "likelihood": 2,
+      "impact": 2,
+      "wording": "Ensure that NetScaler appliances are running the latest recommended versions to address potential vulnerabilities in SAML configurations."
+    },
+    {
+      "id": "nshc000047",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Security",
+      "title": "Disable SSLv3 on SSL profiles and SSL vservers",
+      "details": "SSLv3 is considered insecure due to vulnerabilities, such as the POODLE attack. It should generally be disabled unless explicitly required for specific applications.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/citrix-adc/current-release/ssl/ssl-profiles/ssl-enabling-the-default-profile.html"
+      ],
+      "likelihood": 2,
+      "impact": 3,
+      "wording": "Disable SSLv3 globally to enhance system security and eliminate vulnerabilities like the POODLE attack."
+    },
+    {
+      "id": "nshc000048",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Security",
+      "title": "Disable TLSv1.0 on SSL profiles and SSL vservers",
+      "details": "TLSv1.0 is considered insecure due to known vulnerabilities. It should be disabled unless explicitly required by specific applications.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/citrix-adc/current-release/ssl/ssl-profiles/ssl-enabling-the-default-profile.html"
+      ],
+      "likelihood": 2,
+      "impact": 3,
+      "wording": "Disable TLSv1.0 globally to improve security and prevent vulnerabilities associated with the outdated protocol."
+    },
+    {
+      "id": "nshc000049",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Security",
+      "title": "Disable TLSv1.1 on SSL profiles and SSL vservers",
+      "details": "TLSv1.1 is considered insecure due to weaknesses and should generally be disabled unless explicitly required by specific applications.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/citrix-adc/current-release/ssl/ssl-profiles/ssl-enabling-the-default-profile.html"
+      ],
+      "likelihood": 2,
+      "impact": 3,
+      "wording": "Disable TLSv1.1 globally to improve security and prevent vulnerabilities associated with the outdated protocol."
+    },
+    {
+      "id": "nshc000050",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Security",
+      "title": "Enable TLS1.2 on SSL profiles and SSL vservers",
+      "details": "TLSv1.2 should be enabled by default on all services to ensure secure communication. Custom SSL profiles should be used for both front-end and back-end services.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/citrix-adc/current-release/ssl/ssl-profiles/ssl-enabling-the-default-profile.html"
+      ],
+      "likelihood": 1,
+      "impact": 3,
+      "wording": "Ensure that TLSv1.2 is enabled on all services to provide secure communication and avoid outdated protocols."
+    },
+    {
+      "id": "nshc000051",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Security",
+      "title": "Enable TLS1.3 on SSL profiles and SSL vservers",
+      "details": "TLSv1.3 offers improved security and performance over TLSv1.2, however, it may require compatibility checks with applications before enabling it.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/citrix-adc/current-release/ssl/tls13-protocol-support.html"
+      ],
+      "likelihood": 1,
+      "impact": 3,
+      "wording": "Enable TLSv1.3 for enhanced security and performance improvements over TLSv1.2."
+    },
+    {
+      "id": "nshc000052",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Security",
+      "title": "Verify if KEK key is present",
+      "details": "KEK encrypts passwords with a local key, ensuring they cannot be used or decrypted on another machine. This provides an added layer of security for stored passwords.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/netscaler-adc-secure-deployment.html"
+      ],
+      "likelihood": 1,
+      "impact": 3,
+      "wording": "The KEK key should be available on the NetScaler, to ensure secure password encryption, especially after firmware upgrades."
+    },
+    {
+      "id": "nshc000053",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Security",
+      "title": "Disable enhanced authentication feedback",
+      "details": "The Enhanced Authentication Feedback option controls whether specific error details are provided during authentication failure. Setting it to \"YES\" reveals detailed error messages, which can be exploited by malicious users, while setting it to \"NO\" ensures a generic error response.",
+      "resources": [
+        "https://support.citrix.com/external/article?articleUrl=CTX223404-how-to-enable-and-customize-enhanced-security-feedback-messages-on-netscaler"
+      ],
+      "likelihood": 2,
+      "impact": 2,
+      "wording": "Set Enhanced Authentication Feedback to \"NO\" to ensure generic error messages and protect sensitive authentication details. This feature should be used to troubleshooting purposes only."
+    },
+    {
+      "id": "nshc000054",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Security",
+      "title": "Enable support for HTTP strict transport security (HSTS) on SSL profiles",
+      "details": "HSTS is a security feature that forces clients to access a service over HTTPS, protecting against downgrade attacks and cookie hijacking. The HSTS header should be included in all HTTPS responses.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/citrix-adc/current-release/ssl/how-to-articles/ssl-support-for-hsts.html"
+      ],
+      "likelihood": 2,
+      "impact": 2,
+      "wording": "HSTS enforces HTTPS, preventing downgrade attacks. It enforces secure communication and is necessary even if HTTPS is already in use. Add the HSTS header to all HTTPS responses."
+    },
+    {
+      "id": "nshc000055",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Security",
+      "title": "Avoid using a Gateway Default Authorization set to ALLOW",
+      "details": "The Gateway Default Authorization is set to DENY which ensures that access is blocked by default, only allowing access when explicitly authorized.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/citrix-adc/current-release/aaa-tm/entities-of-authentication-authorization-auditing/authorization-policies.html"
+      ],
+      "likelihood": 2,
+      "impact": 3,
+      "wording": "The Gateway Default Authorization set to DENY ensures that access is blocked by default, improving security by only allowing explicit access when needed. Ensure that specific access permissions are granted only when required, to minimize exposure."
+    },
+    {
+      "id": "nshc000056",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Security",
+      "title": "Enable defense against TCP spoofing attacks",
+      "details": "In NetScaler firmware versions 14.1 build 4.x and above, protection against TCP spoofing attacks is achieved through RFC 5961 compliance. In versions prior to 14.1, TCP setting had to be enabled to protect against TCP spoofing attacks",
+      "resources": [
+        "https://docs.netscaler.com/en-us/citrix-adc/current-release/system/tcp-configurations.html#defending-tcp-against-spoofing-attacks"
+      ],
+      "likelihood": 1,
+      "impact": 3,
+      "wording": "RFC 5961 introduces mechanisms to mitigate TCP spoofing attacks by validating incoming TCP packets more strictly. In NetScaler firmware versions 14.1 build 4.x and above, RFC 5961 compliance automatically protects against TCP spoofing attacks. In earlier versions, manual configuration is required for this protection."
+    },
+    {
+      "id": "nshc000057",
+      "platforms": [
+        "SDX",
+        "MPX"
+      ],
+      "focus": "System",
+      "title": "Disable HA monitoring for interfaces that are members of a LACP channel",
+      "details": "When using LACP channels for redundancy, HA failover caused by a single link failure in the channel is undesirable. Marking individual component interfaces as unmonitored ensures failover occurs only when the port-channel goes down.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/sdx/current-release/manage-monitor-appliance-network-configuration/managing-interfaces.html"
+      ],
+      "likelihood": 2,
+      "impact": 1,
+      "wording": "When using LACP channels, marking individual component interfaces as unmonitored ensures failover only occurs when the entire port-channel fails, preventing unnecessary HA failovers due to a single link failure."
+    },
+    {
+      "id": "nshc000058",
+      "platforms": [
+        "SDX",
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "System",
+      "title": "Bind each VLAN to a single interface or channel",
+      "details": "By default, NetScaler assigns all interfaces, channels, and IP addresses to VLAN 1, which can expose all IP addresses to every directly connected network. Proper VLAN configuration ensures logical network separation and traffic isolation.",
+      "resources": [
+        "https://support.citrix.com/external/article?articleUrl=CTX214033-citrix-adc-networking-and-vlan-best-practices&language=en_US"
+      ],
+      "likelihood": 2,
+      "impact": 3,
+      "wording": "To avoid exposing NetScaler IPs across all connected networks, bind each VLAN to a specific interface or channel, for logical network separation and traffic isolation."
+    },
+    {
+      "id": "nshc000059",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Networking",
+      "title": "Bind SNIP to its respective VLAN",
+      "details": "Each SNIP should be bound to a specific VLAN, ensuring proper isolation of networks. The only exception is the SNIP on the management network. Proper SNIP-to-VLAN binding ensures that virtual servers are isolated within their respective logical networks.",
+      "resources": [
+        "https://support.citrix.com/external/article?articleUrl=CTX214033-citrix-adc-networking-and-vlan-best-practices&language=en_US"
+      ],
+      "likelihood": 1,
+      "impact": 3,
+      "wording": "Create one SNIP for each directly connected logical network and bind it to the corresponding VLAN to ensure network isolation and proper routing."
+    },
+    {
+      "id": "nshc000060",
+      "platforms": [
+        "SDX",
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "System",
+      "title": "Physical interfaces connecting to the NetScaler should be using LACP",
+      "details": "Redundant cabling and link aggregation provide resilience against failures in cabling, switches, or interfaces. LACP is the preferred method for combining interfaces to enhance redundancy, bandwidth, or both.",
+      "resources": [
+        "https://support.citrix.com/external/article?articleUrl=CTX214033-citrix-adc-networking-and-vlan-best-practices&language=en_US"
+      ],
+      "likelihood": 1,
+      "impact": 1,
+      "wording": "Use redundant cables to connect the NetScaler to each network (where possible), ensuring resilience against physical link failures."
+    },
+    {
+      "id": "nshc000061",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "System",
+      "title": "Diffie-Hellman Ciphers should be avoided due to their high cryptographic resource usage",
+      "details": "While Diffie-Hellman (DH) provides Forward Secrecy, it is very resource-intensive on NetScaler instance. DH ciphers are typically avoided unless necessary for legacy client support. Forward Secrecy (FS) ensures session keys remain secure even if the private key is compromised and it can be achieved with Elliptic Curve Diffie-Hellman (ECDH), or Ephemeral versions like DHE/ECDHE.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/citrix-adc/current-release/ssl/ciphers-available-on-the-citrix-ADC-appliances/diffie-hellman-key-generation-and-achieving-pfs-with-dhe.html"
+      ],
+      "likelihood": 2,
+      "impact": 2,
+      "wording": "Use ECDHE (Elliptic Curve Diffie-Hellman Ephemeral) in SSL/TLS configurations to enable Forward Secrecy. Avoid DH ciphers unless required for legacy client support and ensure no DH keys are bound if not needed."
+    },
+    {
+      "id": "nshc000062",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "System",
+      "title": "Configure ACLs on Management Interface",
+      "details": "ACLs filter IP traffic based on defined conditions, securing the network by controlling access to management interfaces and other resources.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/citrix-adc/current-release/networking/access-control-lists-acls.html"
+      ],
+      "likelihood": 2,
+      "impact": 3,
+      "wording": "For enhanced security, configure ACLs to restrict access to the management interfaces, allowing only authorized IP ranges."
+    },
+    {
+      "id": "nshc000063",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Networking",
+      "title": "Configure PBRs on Management Interface",
+      "details": "PBR ensures that traffic from management IP addresses uses the management router, keeping management and data traffic segmented.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/citrix-adc/current-release/networking/ip-routing/configuring-policy-based-routes/configuring-policy-based-routes-pbrs-for-ipv4-traffic.html"
+      ],
+      "likelihood": 2,
+      "impact": 2,
+      "wording": "PBRs are leveraged on the NetScaler to effectively separates management and data-plane traffic, enhancing security and network isolation."
+    },
+    {
+      "id": "nshc000064",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Security (Management Access)",
+      "title": "Restrict Management Access to Dedicated Management Networks Only",
+      "details": "Management access should only be enabled on SNIPs belonging to management networks unless explicitly required for other networks.",
+      "resources": [
+        "https://support.citrix.com/external/article?articleUrl=CTX126736-how-to-restrict-access-to-netscaler-owned-ip-addresses-only-from-the-management-applications"
+      ],
+      "likelihood": 2,
+      "impact": 3,
+      "wording": "Disable management access on all SNIPs not intended for management access, to maintain a high security posture."
+    },
+    {
+      "id": "nshc000065",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Security",
+      "title": "Avoid using loopback-bound services",
+      "details": "Binding services to the loopback address may cause issues during system upgrades and conflict with device-specific services that are already running on the NetScaler.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/citrix-adc/current-release/appexpert/responder/how-to-redirect-http-requests-https-using-responder.html"
+      ],
+      "likelihood": 3,
+      "impact": 3,
+      "wording": "Avoid binding services to the loopback address unless absolutely necessary, to prevent potential upgrade issues and conflicts with device-specific services."
+    },
+    {
+      "id": "nshc000066",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "System",
+      "title": "Use NetScaler Console / NetScaler Console Service to manage the deployed NetScaler estate",
+      "details": "The NetScaler Console provides a unified platform for managing, monitoring, and troubleshooting the entire global application delivery infrastructure from a single location.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/netscaler-console-service/overview.html"
+      ],
+      "likelihood": 3,
+      "impact": 2,
+      "wording": "Leverage the NetScaler Console for all management, monitoring, and troubleshooting tasks to streamline operations."
+    },
+    {
+      "id": "nshc000067",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Security",
+      "title": "Link certificates to a CA certificate",
+      "details": "All certificates in use on the NetScaler must have a complete chain of trust, including the root and intermediate certificates, to ensure secure and trusted connections.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/citrix-adc/current-release/ssl/ssl-certificates/install-link-and-update-certificates.html"
+      ],
+      "likelihood": 2,
+      "impact": 2,
+      "wording": "Ensure that all certificates on the NetScaler have a complete chain of trust, including root and intermediate certificates, to prevent SSL errors and maintain secure connections."
+    },
+    {
+      "id": "nshc000068",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Security",
+      "title": "Review SSL configuration on NetScaler internal services",
+      "details": "To enhance internal security, SSL settings should be updated to follow industry leading practices.",
+      "resources": [
+        "https://support.citrix.com/external/article?articleUrl=CTX211941-configuring-the-ssl-internal-service-for-the-https-management-connections-for-netscaler"
+      ],
+      "likelihood": 2,
+      "impact": 3,
+      "wording": "To enhance internal security, SSL settings should be updated to follow industry leading practices."
+    },
+    {
+      "id": "nshc000069",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "System",
+      "title": "Replace the default certificate with a Trusted CA Certificate",
+      "details": "The default certificate used for NetScaler management interfaces is not signed by a trusted Certificate Authority (CA). It is recommended to replace it with a CA-signed certificate for improved security and trust.",
+      "resources": [
+        "https://support.citrix.com/s/article/CTX122521-how-to-replace-the-default-certificate-of-a-netscaler-appliance-with-a-trusted-ca-certificate-that-matches-the-hostname-of-netscaler?language=en_US"
+      ],
+      "likelihood": 2,
+      "impact": 3,
+      "wording": "Replace the default self-signed certificate on management interfaces with a CA-signed certificate to eliminate security warnings and enhance security."
+    },
+    {
+      "id": "nshc000070",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Security",
+      "title": "Use built-in Cipher Groups",
+      "details": "Citrix recommends using built-in Cipher Groups (e.g., HIGH and TLS1.3) for secure and updated configurations. Custom Cipher Groups may be used if mandated by company security policies.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/citrix-adc/current-release/ssl/ciphers-available-on-the-citrix-adc-appliances.html"
+      ],
+      "likelihood": 2,
+      "impact": 3,
+      "wording": "Use built-in Cipher Groups like HIGH and TLS1.3 for secure, updated configurations, minimizing manual maintenance. Custom groups should align with corporate policies and be validated with stakeholders."
+    },
+    {
+      "id": "nshc000071",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Application Delivery",
+      "title": "Use RfWebUI portal theme",
+      "details": "RfWebUI is the recommended portal theme for Citrix ADC, as older themes like Default, GreenBubble, and X1 are being deprecated.",
+      "resources": [
+        "https://support.citrix.com/s/article/CTX568809-moving-to-rfwebui-from-deprecated-themes-default-green-bubble-or-x1?language=en_US"
+      ],
+      "likelihood": 2,
+      "impact": 2,
+      "wording": "Adopt RfWebUI as the default portal theme to ensure compatibility and future support, replacing deprecated themes like Default, GreenBubble, and X1."
+    },
+    {
+      "id": "nshc000072",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "System",
+      "title": "Upgrade considerations for customized configuration files in the /etc directory",
+      "details": "Proper handling of custom configurations during upgrades is critical to maintaining NetScaler appliance stability and functionality.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/citrix-adc/current-release/upgrade-downgrade-citrix-adc-appliance/upgrade-considerations-customized-files.html"
+      ],
+      "likelihood": 3,
+      "impact": 3,
+      "wording": "Backup and verify custom configurations before upgrading to prevent failures and ensure compatibility. Test in a staging environment first."
+    },
+    {
+      "id": "nshc000073",
+      "platforms": [
+        "SDX",
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Security (Management Access)",
+      "title": "Configure Hostname for NetScaler Instance",
+      "details": "Setting a unique hostname for a NetScaler instance aids in distinguishing between multiple instances and avoids confusion, as well as allowing to secure management traffic via SSL certificates.",
+      "resources": [
+        "https://support.citrix.com/s/article/CTX130146-how-to-change-the-hostname-of-a-netscaler-appliance?language=en_US"
+      ],
+      "likelihood": 2,
+      "impact": 2,
+      "wording": "Set a unique hostname for each NetScaler instance to improve identity, access (via DNS), and secure management traffic with SSL certificates."
+    },
+    {
+      "id": "nshc000074",
+      "platforms": [
+        "SDX",
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Application Delivery",
+      "title": "Encrypt login information for nFactor flow",
+      "details": "Enabling encryption of login request fields in NetScaler Gateway with nFactor authentication helps protect sensitive user data during authentication.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/netscaler-adc-secure-deployment/other-features/netscaler-gateway-security-recommendations.html"
+      ],
+      "likelihood": 1,
+      "impact": 3,
+      "wording": "Enabling encryption of login request fields in NetScaler Gateway with nFactor authentication helps protect sensitive user data during authentication."
+    },
+    {
+      "id": "nshc000075",
+      "platforms": [
+        "MPX",
+        "VPX"
+      ],
+      "focus": "Security",
+      "title": "Enable Web Application Firewall",
+      "details": "Configuring the NetScaler Web Application Firewall (WAF) to protect both load-balanced web applications and NetScaler Gateway enhances security.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/citrix-adc/current-release/application-firewall/introduction-to-citrix-web-app-firewall.html"
+      ],
+      "likelihood": 3,
+      "impact": 3,
+      "wording": "Configuring the NetScaler Web Application Firewall (WAF) to protect both load-balanced web applications and NetScaler Gateway enhances security."
+    },
+    {
+      "id": "nshc000076",
+      "platforms": [
+        "MPX",
+        "VPX"
+      ],
+      "focus": "Security",
+      "title": "Enable Bot Management",
+      "details": "Configuring NetScaler BOT management helps protect applications from malicious bot traffic.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/citrix-adc/current-release/bot-management.html"
+      ],
+      "likelihood": 3,
+      "impact": 3,
+      "wording": "Configuring NetScaler BOT management helps protect applications from malicious bot traffic."
+    },
+    {
+      "id": "nshc000077",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Security",
+      "title": "Set max login and failed login timeout for AAA and GW vserver",
+      "details": "Configuring maximum login attempts and failed login timeout to prevent brute force attacks.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/citrix-adc/current-release/system/authentication-and-authorization-for-system-user/user-account-and-password-management.html#system-user-account-lockout"
+      ],
+      "likelihood": 2,
+      "impact": 3,
+      "wording": "To prevent brute force attacks, set user lockout based on internal security policy, ensuring NetScaler's limits align with Active Directory, to prevent unintended lockouts."
+    },
+    {
+      "id": "nshc000078",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Security",
+      "title": "Set protections against HTTP Desync attacks",
+      "details": "HTTP desync attacks exploit inconsistencies in how different systems (e.g., a front end proxy like a NetScaler and a back-end server) parse and handle HTTP requests - particularly their headers.",
+      "resources": [
+        "https://community.citrix.com/techzone-blogs/netscaler/staying-ahead-how-netscaler-safeguards-against-http-desync-attacks/"
+      ],
+      "likelihood": 1,
+      "impact": 2,
+      "wording": "Enable the recommended settings to mitigate HTTP Desync attacks"
+    },
+    {
+      "id": "nshc000079",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Security",
+      "title": "Use strong and trusted ECC curves",
+      "details": "HTTP desync attacks exploit inconsistencies in how different systems (e.g., a front end proxy like a NetScaler and a back-end server) parse and handle HTTP requests - particularly their headers.",
+      "resources": [
+        "https://community.citrix.com/tech-zone/build/tech-papers/networking-tls-best-practices-2025/"
+      ],
+      "likelihood": 1,
+      "impact": 2,
+      "wording": "Use strong and trusted ECC curves"
+    },
+    {
+      "id": "nshc000080",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Security",
+      "title": "Deny and throttle SSL renegotiation for NONSECURE in SSL profiles.",
+      "details": "Set Deny SSL Renegotiation\u202fand to\u202fNONSECURE\u202fto allow only clients that support RFC 5746 to renegotiate. Set the Maximum Renegotiation Rate to 100 or a value suitable for your environment.",
+      "resources": [
+        "https://community.citrix.com/tech-zone/build/tech-papers/networking-tls-best-practices-2025/"
+      ],
+      "likelihood": 1,
+      "impact": 2,
+      "wording": "Deny and throttle SSL renegotiation for NONSECURE in SSL profiles."
+    },
+    {
+      "id": "nshc000081",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Networking",
+      "title": "IPv4 default route missing",
+      "details": "Without a default route, the NetScaler won\u2019t know where to send traffic for destinations that don\u2019t match a more specific route in the routing table",
+      "resources": [
+        "https://docs.netscaler.com/en-us/citrix-adc/current-release/networking/best-practices-network-configurations.html"
+      ],
+      "likelihood": 3,
+      "impact": 3,
+      "wording": "Without a default route, the NetScaler won\u2019t know where to send traffic for destinations that don\u2019t match a more specific route in the routing table"
+    },
+    {
+      "id": "nshc000082",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Networking",
+      "title": "IPv6 default route missing",
+      "details": "Without a default route, the NetScaler won\u2019t know where to send traffic for destinations that don\u2019t match a more specific route in the routing table",
+      "resources": [
+        "https://docs.netscaler.com/en-us/citrix-adc/current-release/networking/best-practices-network-configurations.html"
+      ],
+      "likelihood": 3,
+      "impact": 3,
+      "wording": "Without a default route, the NetScaler won\u2019t know where to send traffic for destinations that don\u2019t match a more specific route in the routing table"
+    },
+    {
+      "id": "nshc000083",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Networking",
+      "title": "Multiple IPv4 default routes in use",
+      "details": "If multiple default gateways point to different subnets and interfaces at the same time, NetScaler will still install them in the routing table. With the same cost, ECMP (Equal-Cost Multi-Path) hashing applies, however, the result can be unpredictable depending on the upstream design",
+      "resources": [
+        "https://docs.netscaler.com/en-us/citrix-adc/current-release/networking/best-practices-network-configurations.html"
+      ],
+      "likelihood": 3,
+      "impact": 3,
+      "wording": "If multiple default gateways point to different subnets and interfaces at the same time, NetScaler will still install them in the routing table. With the same cost, ECMP (Equal-Cost Multi-Path) hashing applies, however, the result can be unpredictable depending on the upstream design"
+    },
+    {
+      "id": "nshc000084",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Networking",
+      "title": "Multiple IPv6 default routes in use",
+      "details": "If multiple default gateways point to different subnets and interfaces at the same time, NetScaler will still install them in the routing table. With the same cost, ECMP (Equal-Cost Multi-Path) hashing applies, however, the result can be unpredictable depending on the upstream design",
+      "resources": [
+        "https://docs.netscaler.com/en-us/citrix-adc/current-release/networking/best-practices-network-configurations.html"
+      ],
+      "likelihood": 3,
+      "impact": 3,
+      "wording": "If multiple default gateways point to different subnets and interfaces at the same time, NetScaler will still install them in the routing table. With the same cost, ECMP (Equal-Cost Multi-Path) hashing applies, however, the result can be unpredictable depending on the upstream design"
+    },
+    {
+      "id": "nshc001001",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "Networking",
+      "title": "MAC moves have been detected on interface",
+      "details": "MAC address movement between interfaces may occur when VLAN and SNIP are not bound to specific interfaces, or if there is an LACP misconfiguration on the switch side.",
+      "resources": [
+        "https://support.citrix.com/external/article?articleUrl=CTX224626-mac-moves-observed-on-netscaler-when-more-than-one-interface-is-in-same-vlan"
+      ],
+      "likelihood": 3,
+      "impact": 3,
+      "wording": "Bind one VLAN per interface and ensure correct LACP configuration to prevent MAC address movement and ensure stable traffic flow. Verify switch configuration and VLAN-SNIP bindings."
+    },
+    {
+      "id": "nshc001002",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "System",
+      "title": "Ensure sufficient free space in the /VAR directory",
+      "details": "The /VAR directory stores important NetScaler maintenance and monitoring data, such as logs, traces, and firmware. Insufficient space in /var can cause upgrade failures or prevent GUI access.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/citrix-adc/current-release/system/troubleshooting-citrix-adc/how-to-free-space-on-var-directory.html"
+      ],
+      "likelihood": 2,
+      "impact": 3,
+      "wording": "Ensure at least 5GB of free space in the /var directory and regularly clean up unnecessary files to avoid upgrade failures and system issues."
+    },
+    {
+      "id": "nshc001003",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "System",
+      "title": "Ensure uptime is not too high",
+      "details": "High uptime on NetScaler instances or appliances can lead to performance degradation or unanticipated issues. Rebooting or power cycling once a year helps maintain system health.",
+      "resources": [],
+      "likelihood": 2,
+      "impact": 2,
+      "wording": "Reboot NetScaler instances with uptime over 365 days to maintain system health and avoid potential performance issues."
+    },
+    {
+      "id": "nshc001004",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "System",
+      "title": "Ensure Memory usage is not too high",
+      "details": "Consistently high memory usage on NetScaler may indicate that the current sizing or configuration is inadequate for the traffic load.",
+      "resources": [],
+      "likelihood": 2,
+      "impact": 3,
+      "wording": "Review and adjust NetScaler sizing and configuration to ensure they align with traffic demands, especially if memory usage is high."
+    },
+    {
+      "id": "nshc001005",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "System",
+      "title": "Ensure Packet CPU usage is not too high",
+      "details": "Consistently high Packet CPU usage on NetScaler suggests that the system may not be adequately sized or configured for the current traffic load.",
+      "resources": [],
+      "likelihood": 2,
+      "impact": 3,
+      "wording": "Review and adjust the NetScaler sizing and configuration to handle traffic effectively, especially if high Packet CPU was observed."
+    },
+    {
+      "id": "nshc001006",
+      "platforms": [
+        "VPX"
+      ],
+      "focus": "System",
+      "title": "Ensure 4GB of RAM per vCPU are assigned",
+      "details": "For optimal performance on NetScaler, it is recommended to allocate 4 GB of memory per vCPU, regardless of the license type.",
+      "resources": [
+        "https://www.netscaler.com/content/dam/netscaler/documents/data-sheet/netscaler-data-sheet.pdf"
+      ],
+      "likelihood": 2,
+      "impact": 2,
+      "wording": "Ensure that NetScaler instances are configured with at least 4 GB of memory for every vCPU to maintain high performance and stability."
+    },
+    {
+      "id": "nshc002001",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "System",
+      "title": "Resolve HA heartbeats not seen on the interface",
+      "details": "If NetScaler appliances are not receiving heartbeats on one or more interfaces, it could disrupt HA failover behavior in case of an interface failure on the primary instance.",
+      "resources": [
+        "https://support.citrix.com/external/article?articleUrl=CTX201788-high-availability-trafficheartbeats-are-not-seen-on-netscaler-tagged-channel-network-interfaces&language=en_US"
+      ],
+      "likelihood": 3,
+      "impact": 2,
+      "wording": "Investigate and resolve the heartbeat issue to ensure proper HA failover functionality. Check interface configurations, network connectivity, and HA settings."
+    },
+    {
+      "id": "nshc002003",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "System",
+      "title": "Ensure configuration is saved after configuration changes",
+      "details": "Running a NetScaler instance with configuration changes that have not been saved has the risk of losing these changes in the case of unintended reboot of the instance",
+      "resources": [
+        "https://support.citrix.com/s/article/CTX208523-faq-difference-between-running-and-saved-configuration-on-netscaler?language=en_US"
+      ],
+      "likelihood": 3,
+      "impact": 2,
+      "wording": "Ensure configuration is always saved after each change."
+    },
+    {
+      "id": "nshc003001",
+      "platforms": [
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "System",
+      "title": "Configure NTP",
+      "details": "Network Time Protocol (NTP) is essential for accurate time synchronization across NetScaler instances, ensuring proper logging, session management, and time-based tasks.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/netscaler-application-delivery-management-software/current-release/configure/configure-ntp-server.html"
+      ],
+      "likelihood": 1,
+      "impact": 3,
+      "wording": "Ensure that NTP servers are properly configured on all NetScaler instances, to maintain accurate time synchronization."
+    },
+    {
+      "id": "nshc004001",
+      "platforms": [
+        "SDX",
+        "MPX",
+        "VPX",
+        "BLX"
+      ],
+      "focus": "System",
+      "title": "Ensure NetScaler version is not EOM / EOL",
+      "details": "NetScaler version 13.0 was End of Life (EOL) in July 2024. Upgrading to firmware version 13.1 or 14.1 is recommended to ensure continued support. SDX firmware should be aligned with or newer than VPX firmware.",
+      "resources": [
+        "https://www.citrix.com/support/product-lifecycle/product-matrix.html"
+      ],
+      "likelihood": 3,
+      "impact": 3,
+      "wording": "Upgrade NetScaler instances to firmware version 13.1 or 14.1 and ensure SDX firmware is updated to be the same or newer than the VPX firmware."
+    },
+    {
+      "id": "nshc004002",
+      "platforms": [
+        "SDX"
+      ],
+      "focus": "System",
+      "title": "Configure SDX hostname",
+      "details": "Configuring a hostname for the SDX appliance ensures proper identification and management within the network environment, as well as allowing to secure management traffic via SSL certificates.",
+      "resources": [
+        "https://support.citrix.com/external/article?articleUrl=CTX137262-how-to-change-the-hostname-of-citrix-adc-sdx-appliance"
+      ],
+      "likelihood": 1,
+      "impact": 1,
+      "wording": "Assign hostname to the SDX appliance during initial setup, as part of configuration best practices, to ensure proper identification and ease of management."
+    },
+    {
+      "id": "nshc006001",
+      "platforms": [
+        "SDX"
+      ],
+      "focus": "System",
+      "title": "SDX - Set SNMP manager IP(s)",
+      "details": "To enhance security, it is recommended to restrict SNMP queries on the NetScaler SDX to only authorized hosts. This can be done by specifying IP addresses or ranges allowed to access the SNMP engine.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/sdx/current-release/manage-monitor-appliance-network-configuration/configuring-snmp-trap-destination.html"
+      ],
+      "likelihood": 2,
+      "impact": 2,
+      "wording": "Configure SNMP managers or networks to limit access to only authorized IP addresses, ensuring only trusted hosts can query the NetScaler SDX SNMP engine."
+    },
+    {
+      "id": "nshc006002",
+      "platforms": [
+        "SDX"
+      ],
+      "focus": "System",
+      "title": "SDX - Set SNMP trap destination",
+      "details": "Configuring the NetScaler SDX to send SNMP traps to designated trap listeners ensures that SNMP alarms and alerts are properly monitored and addressed.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/sdx/current-release/manage-monitor-appliance-network-configuration/configuring-snmp-trap-destination.html"
+      ],
+      "likelihood": 2,
+      "impact": 2,
+      "wording": "Set up and configure an SNMP trap listener to receive and process SNMP messages from the NetScaler SDX, whenever an SNMP alarm is triggered."
+    },
+    {
+      "id": "nshc006003",
+      "platforms": [
+        "SDX"
+      ],
+      "focus": "System",
+      "title": "SDX - Set strong community strings",
+      "details": "NetScaler SDX should use secure SNMP community strings, consisting of a combination of characters and special symbols, for enhanced security. For stronger protection, SNMPv3 should be used, as it does not rely on unencrypted community strings.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/sdx/current-release/manage-monitor-appliance-network-configuration/configuring-snmp-trap-destination.html"
+      ],
+      "likelihood": 2,
+      "impact": 2,
+      "wording": "Create strong community strings using a mix of upper and lowercase letters, numbers, and special characters. Implement SNMPv3 for encryption and better security instead of SNMPv1/v2."
+    },
+    {
+      "id": "nshc007001",
+      "platforms": [
+        "SDX"
+      ],
+      "focus": "System",
+      "title": "SDX Configure syslog remote destination",
+      "details": "Configuring the NetScaler SDX to send audit logs to an external syslog server ensures proper data retention, redundancy, and the ability to analyze logs for security and troubleshooting purposes.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/sdx/current-release/manage-monitor-appliance-network-configuration/configuring-syslog-notifications.html"
+      ],
+      "likelihood": 2,
+      "impact": 2,
+      "wording": "Set up an external syslog server to collect and store NetScaler SDX audit logs, for redundancy and long-term retention."
+    },
+    {
+      "id": "nshc008001",
+      "platforms": [
+        "SDX"
+      ],
+      "focus": "System",
+      "title": "SDX Configure user authentication",
+      "details": "It is recommended to configure external authentication for the NetScaler SDX Management Service using systems like LDAP or TACACS, shifting account control and administration outside the NetScaler system for enhanced security and centralized management.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/sdx/current-release/configuring-management-service/configuring-authentication-authorization-settings.html"
+      ],
+      "likelihood": 1,
+      "impact": 1,
+      "wording": "Configure LDAP, TACACS, or RADIUS for external authentication, to streamline account management and improve security."
+    },
+    {
+      "id": "nshc009001",
+      "platforms": [
+        "SDX"
+      ],
+      "focus": "System",
+      "title": "Configure NTP on SDX appliance",
+      "details": "Configuring the NetScaler SDX appliance to synchronize its local clock with an NTP server ensures consistent time settings across the appliance and other servers in the network.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/sdx/current-release/manage-monitor-appliance-network-configuration.html"
+      ],
+      "likelihood": 1,
+      "impact": 1,
+      "wording": "Set up NTP server and NTP synchronization on the NetScaler SDX appliance to maintain accurate and consistent time across the network."
+    },
+    {
+      "id": "nshc010001",
+      "platforms": [
+        "SDX"
+      ],
+      "focus": "System",
+      "title": "Configure DNS on SDX appliance",
+      "details": "Adding multiple DNS servers to the NetScaler SDX configuration ensures redundancy and improves the reliability of DNS resolution in case one server becomes unavailable.",
+      "resources": [
+        "https://docs.netscaler.com/en-us/netscaler-hardware-platforms/sdx/initial-configuration.html"
+      ],
+      "likelihood": 1,
+      "impact": 1,
+      "wording": "Configure multiple DNS servers on the NetScaler SDX to provide fallback options and ensure uninterrupted DNS resolution."
+    },
+    {
+      "id": "nshc011001",
+      "platforms": [
+        "SDX"
+      ],
+      "focus": "System",
+      "title": "Ensure SDX uptime is not too high",
+      "details": "It is recommended to power cycle the NetScaler SDX annually during a disaster recovery (DR) or high availability (HA) failover exercise to maintain system health and ensure optimal performance.",
+      "resources": [],
+      "likelihood": 2,
+      "impact": 2,
+      "wording": "Reboot the NetScaler SDX if its uptime exceeds 365 days, and incorporate an annual power cycle during DR or HA failover exercises for preventive maintenance."
+    },
+    {
+      "id": "nshc012001",
+      "platforms": [
+        "SDX"
+      ],
+      "focus": "System",
+      "title": "Disable HTTP Access to the SVM",
+      "details": "Configuring HTTPS as the sole access method for the SVM (Service Virtual Machine) IP of the NetScaler SDX ensures secure communication for management and administrative tasks.",
+      "resources": [],
+      "likelihood": 2,
+      "impact": 3,
+      "wording": "Ensure that only HTTPS is configured for accessing the SVM IP of the SDX to maintain secure, encrypted management communication."
+    },
+    {
+      "id": "nshc013001",
+      "platforms": [
+        "SDX"
+      ],
+      "focus": "System",
+      "title": "Enable HTTPS Access to the SVM",
+      "details": "Configuring secure management protocols for accessing the SDX SVM ensures that outdated and insecure protocols are disabled, and more secure protocols like TLSv1.2 are enabled for communication.",
+      "resources": [],
+      "likelihood": 2,
+      "impact": 3,
+      "wording": "Configuring secure management protocols for accessing the SDX SVM ensures that outdated and insecure protocols are disabled, and more secure protocols like TLSv1.2 are enabled for communication."
+    },
+    {
+      "id": "nshc014001",
+      "platforms": [
+        "SDX"
+      ],
+      "focus": "System",
+      "title": "Ensure SVM Password complexity is enforced",
+      "details": "Enabling password complexity enforcement ensures that passwords meet certain criteria (e.g., length, character variety) to improve security and reduce the risk of unauthorized access.",
+      "resources": [],
+      "likelihood": 1,
+      "impact": 1,
+      "wording": "Enable password complexity rules to enforce strong password policies, requiring a mix of uppercase and lowercase letters, numbers, and special characters."
+    }
+  ]
+}
