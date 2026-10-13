@@ -23,6 +23,7 @@ class Note:
     risk: str
     wording: str
     evidence: list[str] = field(default_factory=list)
+    resources: list[str] = field(default_factory=list)
 
 
 def inventory_notes(app: Appliance) -> list[Note]:

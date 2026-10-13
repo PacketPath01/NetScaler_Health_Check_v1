@@ -38,6 +38,9 @@ class SslProfile:
     reneg: str = ""
     ciphers: list[str] = field(default_factory=list)
     ocsp: str = ""
+    session_reuse: str = ""
+    server_auth: str = ""
+    hsts_max_age: int | None = None
 
 
 @dataclass
@@ -399,6 +402,12 @@ def _inventory(nsconf: str, show: dict[str, list[str]], stat: str = "") -> dict:
         "disabled": sorted(disabled),
         "hit_counters": bool(re.search(r"(?i)stat (?:lb|cs|vpn|authentication) vserver\b", stat)),
         "posture": _posture(nsconf, show, stat),
+        "tcp_profiles": _tcp_profiles(_first(show, "show ns tcpProfile")),
+        "profile_refs": _profile_refs(nsconf, show),
+        "flush_off": _flush_disabled(_first(show, "show lb vserver"), "lb")
+        + _flush_disabled(_first(show, "show cs vserver"), "cs"),
+        "cip_enabled": _cip_enabled(nsconf),
+        "monitor_binds": _monitor_binds(nsconf),
     }
 
 
@@ -472,9 +481,90 @@ def _http_profiles(text: str) -> list[dict]:
                 "crlf": _flag(chunk, "Drop extra CRLF"),
                 "http2": _line_flag(chunk, "HTTP/2"),
                 "http3": _line_flag(chunk, "HTTP/3"),
+                "host_header": _line_flag(chunk, "Host header validation"),
+                "max_header": _int(_search(r"Maximum header length\s*:\s*(\d+)", chunk)),
+                "max_field": _int(_search(r"Maximum header field length\s*:\s*(\d+)", chunk)),
             }
         )
     return profiles
+
+
+def _tcp_profiles(text: str) -> list[dict]:
+    profiles = []
+    for chunk in re.split(r"(?m)(?=^\d+\))", text or ""):
+        name = _search(r"Name:\s*(\S+)", chunk)
+        if not name:
+            continue
+        profiles.append(
+            {
+                "name": name,
+                "window_scaling": _line_flag(chunk, "Window Scaling status"),
+                "buffer_size": _int(_search(r"TCP Buffer Size:\s*(\d+)", chunk)),
+                "max_burst": _int(_search(r"Maximum TCP segments allowed in a burst:\s*(\d+)", chunk)),
+            }
+        )
+    return profiles
+
+
+def _profile_refs(nsconf: str, show: dict[str, list[str]]) -> dict[str, list[str]]:
+    ssl = set(re.findall(r"(?i)-sslProfile\s+(\S+)", nsconf))
+    ssl.update(profile for _vserver, profile in _ssl_vservers(_first(show, "show ssl vserver")))
+    ssl.update(re.findall(r"(?i)Profile Name\s*:\s*(\S+)", _first(show, "show ssl service")))
+    return {
+        "tcp": sorted(set(re.findall(r"(?i)-tcpProfileName\s+(\S+)", nsconf))),
+        "http": sorted(set(re.findall(r"(?i)-httpProfileName\s+(\S+)", nsconf))),
+        "ssl": sorted(ssl),
+    }
+
+
+def _flush_disabled(text: str, kind: str) -> list[dict]:
+    rows = []
+    for chunk in re.split(r"(?m)(?=^\d+\))", text or ""):
+        name = _search(r"^\d+\)\s+(\S+)", chunk)
+        flush = (_search(r"Down state flush:\s*(\S+)", chunk) or "").upper()
+        if name and flush == "DISABLED":
+            rows.append({"kind": kind, "name": name})
+    return rows
+
+
+def _cip_enabled(nsconf: str) -> list[str]:
+    names = []
+    pattern = r"(?im)^(?:add|set) (?:service|lb vserver|cs vserver|vpn vserver)\s+(\S+).*-cip\s+ENABLED\b"
+    for match in re.finditer(pattern, nsconf):
+        name = match.group(1)
+        if name.lower().startswith("ns"):
+            continue
+        names.append(name)
+    return list(dict.fromkeys(names))
+
+
+def _monitor_binds(nsconf: str) -> list[dict]:
+    types = {
+        "ping": "PING",
+        "tcp": "TCP",
+        "udp": "UDP",
+        "http": "HTTP",
+        "https": "HTTP",
+        "http-ecv": "HTTP",
+        "https-ecv": "HTTP",
+        "tcp-ecv": "TCP",
+        "ping-default": "PING",
+        "tcp-default": "TCP",
+    }
+    for match in re.finditer(r"(?im)^add lb monitor\s+(\S+)\s+(\S+)", nsconf):
+        types[match.group(1).lower()] = match.group(2).upper()
+    rows = []
+    for match in re.finditer(r"(?im)^bind (service|serviceGroup)\s+(\S+)\s+-monitorName\s+(\S+)", nsconf):
+        monitor = match.group(3)
+        rows.append(
+            {
+                "kind": "service" if match.group(1).lower() == "service" else "group",
+                "name": match.group(2),
+                "monitor": monitor,
+                "monitor_type": types.get(monitor.lower(), ""),
+            }
+        )
+    return rows
 
 
 def _line_flag(chunk: str, label: str) -> str:
@@ -876,6 +966,9 @@ def _ssl_profiles(show: dict[str, list[str]]) -> list[SslProfile]:
                 reneg=(_search(r"Deny SSL Renegotiation\s+(\S+)", chunk) or "").upper(),
                 ciphers=re.findall(r"Cipher Name:\s*(\S+)", chunk),
                 ocsp=(_search(r"OCSP Stapling\s*:\s*(ENABLED|DISABLED)", chunk) or "").upper(),
+                session_reuse=(_search(r"Session Reuse:\s*(ENABLED|DISABLED)", chunk) or "").upper(),
+                server_auth=(_search(r"Server Auth:\s*(ENABLED|DISABLED)", chunk) or "").upper(),
+                hsts_max_age=_int(_search(r"HSTS Max-Age:\s*(\d+)", chunk)),
             )
         )
     return profiles

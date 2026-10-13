@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import html
+import re
 from collections import Counter
 from datetime import datetime, timezone
 
@@ -136,16 +137,25 @@ def _node_html(node: dict) -> str:
             current_focus = item["focus"]
             body.append(f"<h4>{html.escape(current_focus)}</h4>")
         body.append(_finding_html(item))
-    body.append("<h3>Checks that passed</h3><ul class='passed'>")
-    for item in passed:
-        body.append(f"<li><code>{html.escape(item['id'])}</code> {html.escape(item['title'])}</li>")
-    body.append("</ul></section>")
+    body.append(_quiet_html("Checks that passed", passed))
+    skipped = [item for item in findings if item["status"] == NA]
+    body.append(_quiet_html("Checks that do not apply", skipped))
+    body.append("</section>")
     return "\n".join(body)
+
+
+def _quiet_html(title: str, items: list[dict]) -> str:
+    if not items:
+        return ""
+    rows = "".join(
+        f"<li><code>{html.escape(item['id'])}</code> {html.escape(item['title'])}</li>" for item in items
+    )
+    return f"<details><summary>{html.escape(title)} ({len(items)})</summary><ul class='passed'>{rows}</ul></details>"
 
 
 def _finding_html(item: dict) -> str:
     resources = "".join(
-        f"<li><a href='{html.escape(url)}'>{html.escape(url)}</a></li>" for url in item["resources"]
+        f"<li><a href='{html.escape(url)}'>{html.escape(_resource_label(url))}</a></li>" for url in item["resources"]
     )
     where = [line for line in item["evidence"] if line.startswith("Where: ")]
     details = [line for line in item["evidence"] if not line.startswith("Where: ")]
@@ -163,9 +173,23 @@ def _finding_html(item: dict) -> str:
         f"<p>{html.escape(item['wording'])}</p>"
         f"{where_html}"
         f"<ul>{evidence}</ul>"
-        + (f"<ul class='links'>{resources}</ul>" if resources else "")
+        + (f"<p class='ref'>Reference</p><ul class='links'>{resources}</ul>" if resources else "")
         + "</article>"
     )
+
+
+def _resource_label(url: str) -> str:
+    found = re.search(r"(CTX\d+)", url, re.I)
+    if found:
+        return found.group(1).upper()
+    slug = url.rstrip("/").split("/")[-1].split("?")[0]
+    slug = re.sub(r"\.html$", "", slug).replace("-", " ").replace("_", " ").strip()
+    if not slug or slug.lower() in {"html", "index"}:
+        return "Citrix documentation"
+    label = slug[:1].upper() + slug[1:]
+    if "docs.netscaler.com" in url or "docs.citrix.com" in url or "support.citrix.com" in url:
+        return f"Citrix: {label}"
+    return label
 
 
 _CSS = """
@@ -198,6 +222,9 @@ h5 { margin:6px 0; font-size:18px; }
 .where { margin:8px 0; padding:8px 10px; background:#eef4f8; border-left:3px solid #14324f; font-weight:600; }
 code { font-family:Consolas, monospace; font-size:13px; }
 .passed { columns:2; }
+details { margin-top:22px; }
+summary { cursor:pointer; font-weight:650; }
+.ref { margin:8px 0 0; font-size:13px; color:var(--muted); }
 .links a { color:#14324f; }
 @media print { body { background:white; } header { background:white; color:black; } .meta,.note { color:#333; } }
 """

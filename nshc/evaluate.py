@@ -9,6 +9,7 @@ from nshc.catalog import CheckDef
 from nshc.cleanup import inventory_notes
 from nshc.hardening import notes as hardening_notes
 from nshc.parse import Appliance, IpDetail
+from nshc.performance import notes as performance_notes
 
 FAIL = "fail"
 PASS = "pass"
@@ -710,14 +711,39 @@ def _extras(app: Appliance) -> list[Outcome]:
     if small_keys:
         extras.append(_extra("nshc-x-keysize", "Certificate key size", "Security", FAIL, "HIGH", "Replace certificates with RSA keys smaller than 2048 bits.", [f"Certificates under 2048 bits: {', '.join(small_keys)}."]))
     for note in inventory_notes(app):
-        extras.append(_extra(note.id, note.title, note.focus, note.status, note.risk, note.wording, note.evidence))
+        extras.append(_from_note(note))
     for note in hardening_notes(app):
-        extras.append(_extra(note.id, note.title, note.focus, note.status, note.risk, note.wording, note.evidence))
+        extras.append(_from_note(note))
+    for note in performance_notes(app):
+        extras.append(_from_note(note))
     return extras
 
 
-def _extra(check_id: str, title: str, focus: str, status: str, risk: str, wording: str, evidence: list[str]) -> Outcome:
-    return Outcome(id=check_id, title=title, focus=focus, status=status, risk=risk, wording=wording, evidence=evidence, kind="extra")
+def _from_note(note) -> Outcome:
+    return _extra(note.id, note.title, note.focus, note.status, note.risk, note.wording, note.evidence, note.resources)
+
+
+def _extra(
+    check_id: str,
+    title: str,
+    focus: str,
+    status: str,
+    risk: str,
+    wording: str,
+    evidence: list[str],
+    resources: list[str] | None = None,
+) -> Outcome:
+    return Outcome(
+        id=check_id,
+        title=title,
+        focus=focus,
+        status=status,
+        risk=risk,
+        wording=wording,
+        evidence=evidence,
+        resources=list(resources or []),
+        kind="extra",
+    )
 
 
 def _advisories(app: Appliance) -> list[Outcome]:

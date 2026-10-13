@@ -10,6 +10,7 @@ from nshc.cli import scan_bundles, summary_text
 from nshc.crypto import CryptoError, decrypt_bytes, encrypt_bytes
 from nshc.evaluate import evaluate
 from nshc.parse import parse_node
+from nshc.report import render_html
 from nshc.bundle import CollectedNode, load_input
 from nshc.catalog import CheckDef, risk_label
 from nshc.redact import redact
@@ -481,6 +482,213 @@ bind ssl profile fe_prof -eccCurveName P_256
         self.assertNotIn("10.0.0.5", blob)
         self.assertNotIn("10.0.0.1", blob)
         self.assertNotIn("10.9.9.9", blob)
+
+    def test_performance_and_config_findings(self):
+        show = """
+exec: show ns tcpProfile
+1)	Name: nstcp_default_profile
+	Window Scaling status: ENABLED
+	TCP Buffer Size: 131072
+	Maximum TCP segments allowed in a burst: 6
+2)	Name: nstcp_default_tcp_lnp
+	Window Scaling status: DISABLED
+	TCP Buffer Size: 131072
+	Maximum TCP segments allowed in a burst: 4
+3)	Name: nstcp_default_WAN_profile
+	Window Scaling status: ENABLED
+	TCP Buffer Size: 20971520
+	Maximum TCP segments allowed in a burst: 2
+4)	Name: app_tcp
+	Window Scaling status: DISABLED
+	TCP Buffer Size: 20971520
+	Maximum TCP segments allowed in a burst: 2
+ Done
+exec: show ns httpProfile
+1)	Name: nshttp_default_profile
+	Maximum header length: 24820
+	Maximum header field length: 24820
+	Host header validation: DISABLED
+2)	Name: app_http
+	Maximum header length: 65535
+	Maximum header field length: 50000
+	Host header validation: DISABLED
+ Done
+exec: show ssl profile
+1)	Name: fe_app (Front-End)
+	Session Reuse: DISABLED
+	HSTS: ENABLED
+	HSTS Max-Age: 15552000
+	TLSv1.2: ENABLED
+2)	Name: be_app (Back-End)
+	Session Reuse: ENABLED
+	Server Auth: DISABLED
+	HSTS: DISABLED
+	HSTS Max-Age: 0
+3)	Name: ns_default_ssl_profile_frontend (Front-End)
+	Session Reuse: ENABLED
+	HSTS: ENABLED
+	HSTS Max-Age: 31536000
+ Done
+exec: show lb vserver
+1)	app_vip (10.8.8.20:443) - SSL	Type: ADDRESS
+	State: UP
+	Down state flush: DISABLED
+2)	other_vip (10.8.8.21:80) - HTTP	Type: ADDRESS
+	State: UP
+	Down state flush: ENABLED
+ Done
+exec: show cs vserver
+1)	switch_vip (10.8.8.22:443) - SSL	Type: CONTENT
+	State: UP
+	Down state flush: ENABLED
+ Done
+exec: show ssl vserver
+	VServer Name: app_vip
+	Profile Name: fe_app
+ Done
+"""
+        nsconf = """
+add lb vserver app_vip SSL 10.8.8.20 443 -tcpProfileName app_tcp -httpProfileName app_http
+add lb vserver other_vip HTTP 10.8.8.21 80
+add cs vserver switch_vip SSL 10.8.8.22 443
+add service web_be 10.9.9.9 SSL 443 -cip ENABLED
+add service plain_be 10.9.9.10 HTTP 80
+add lb monitor ping_only PING
+add lb monitor web_check HTTP
+bind service web_be -monitorName ping_only
+bind service plain_be -monitorName web_check
+set ssl service web_be -sslProfile be_app
+"""
+        app = parse_node(CollectedNode(name="lab", files={"nsconfig/ns.conf": nsconf, "shell/showcmds.txt": show}))
+        extras = {item.id: item for item in evaluate(app, [])}
+        expected = {
+            "nshc-x-tcp-ws": "review",
+            "nshc-x-tcp-buffer": "review",
+            "nshc-x-tcp-burst": "review",
+            "nshc-x-ssl-reuse": "review",
+            "nshc-x-http-header": "review",
+            "nshc-x-server-auth": "review",
+            "nshc-x-host-header": "review",
+            "nshc-x-hsts-age": "review",
+            "nshc-x-flush": "review",
+            "nshc-x-client-ip": "review",
+            "nshc-x-cs-default": "fail",
+            "nshc-x-app-monitor": "review",
+        }
+        for check_id, status in expected.items():
+            self.assertIn(check_id, extras, check_id)
+            self.assertEqual(extras[check_id].status, status, check_id)
+            self.assertTrue(extras[check_id].wording)
+            self.assertTrue(extras[check_id].resources)
+        self.assertNotIn("nstcp_default_tcp_lnp", " ".join(extras["nshc-x-tcp-ws"].evidence))
+        self.assertNotIn("nstcp_default_WAN_profile", " ".join(extras["nshc-x-tcp-buffer"].evidence))
+        self.assertNotIn("nshttp_default_profile", " ".join(extras["nshc-x-host-header"].evidence))
+        quiet = []
+        for check_id in expected:
+            quiet.extend(extras[check_id].evidence)
+        blob = json.dumps(quiet)
+        self.assertNotIn("10.8.8.20", blob)
+        self.assertNotIn("10.9.9.9", blob)
+
+        healthy = """
+exec: show ns tcpProfile
+1)	Name: nstcp_default_profile
+	Window Scaling status: ENABLED
+	TCP Buffer Size: 131072
+	Maximum TCP segments allowed in a burst: 30
+ Done
+exec: show lb vserver
+1)	app_vip (10.1.1.10:80) - HTTP	Type: ADDRESS
+	Down state flush: ENABLED
+ Done
+exec: show cs vserver
+1)	switch_vip (10.1.1.11:80) - HTTP	Type: CONTENT
+	Down state flush: ENABLED
+ Done
+"""
+        healthy_conf = """
+add lb vserver app_vip HTTP 10.1.1.10 80
+add cs vserver switch_vip HTTP 10.1.1.11 80
+bind cs vserver switch_vip -lbvserver app_vip
+add service web_be 10.1.1.12 HTTP 80
+"""
+        quiet_app = parse_node(CollectedNode(name="quiet", files={"nsconfig/ns.conf": healthy_conf, "shell/showcmds.txt": healthy}))
+        quiet_ids = {item.id for item in evaluate(quiet_app, [])}
+        for check_id in expected:
+            self.assertNotIn(check_id, quiet_ids, check_id)
+
+    def test_report_collapses_passes_and_labels_references(self):
+        page = render_html(
+            {
+                "bundle": "lab.tgz",
+                "generated": "2026-10-13 00:00 UTC",
+                "version": "1.1.0",
+                "advisory_data": "2026-10-12",
+                "bundle_sha256": "abc",
+                "identifiers": "full",
+                "appliances": [
+                    {
+                        "hostname": "lab",
+                        "source": "lab",
+                        "platform": "VPX",
+                        "version": "14.1",
+                        "license": "Platinum",
+                        "ha_nodes": 1,
+                        "nsip": [],
+                        "counts": {"fail": 0, "review": 1, "pass": 1, "na": 1},
+                        "findings": [
+                            {
+                                "id": "nshc-x-flush",
+                                "title": "Down state flush is disabled",
+                                "focus": "Configuration",
+                                "status": "review",
+                                "risk": "MEDIUM",
+                                "kind": "extra",
+                                "likelihood": None,
+                                "impact": None,
+                                "wording": "Connections stay on a server after it goes down.",
+                                "evidence": ["1 virtual server."],
+                                "resources": [
+                                    "https://support.citrix.com/external/article/CTX124710/citrix-netscaler-down-state-flush-featur.html"
+                                ],
+                            },
+                            {
+                                "id": "nshc000001",
+                                "title": "Passed item",
+                                "focus": "System",
+                                "status": "pass",
+                                "risk": "INFO",
+                                "kind": "check",
+                                "likelihood": 1,
+                                "impact": 1,
+                                "wording": "ok",
+                                "evidence": [],
+                                "resources": [],
+                            },
+                            {
+                                "id": "nshc000002",
+                                "title": "Skipped item",
+                                "focus": "System",
+                                "status": "na",
+                                "risk": "INFO",
+                                "kind": "check",
+                                "likelihood": 1,
+                                "impact": 1,
+                                "wording": "ok",
+                                "evidence": [],
+                                "resources": [],
+                            },
+                        ],
+                    }
+                ],
+            }
+        )
+        self.assertIn("Connections stay on a server", page)
+        self.assertIn(">CTX124710<", page)
+        self.assertNotIn("open", page.split("<details")[0])
+        self.assertLess(page.index("Connections stay on a server"), page.index("<details"))
+        self.assertLess(page.index("<details"), page.index("Passed item"))
+        self.assertIn("Checks that do not apply", page)
 
 
 if __name__ == "__main__":
