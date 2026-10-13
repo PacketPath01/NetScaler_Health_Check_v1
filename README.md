@@ -1,5 +1,7 @@
 # NetScaler health check
 
+Independent project. Not a Citrix product, and Citrix does not support it.
+
 Drop in a Citrix NetScaler ADC or Gateway support bundle. Get an encrypted report of failing checks, the current Citrix bulletin floors, and a cleanup list. The bundle is not uploaded, and the tool does not change the appliance.
 
 Free to use. No purchase, account, or license file is required.
