@@ -1,6 +1,16 @@
 # NetScaler health check
 
-Offline health checks and security-advisory reports for Citrix NetScaler ADC / NetScaler Gateway support bundles.
+Drop in a Citrix NetScaler ADC or Gateway support bundle. Get an encrypted report of failing checks, the current Citrix bulletin floors, and a cleanup list. The bundle is not uploaded, and the tool does not change the appliance.
+
+**[Download the Windows program](https://github.com/PacketPath01/NetScaler_Health_Check_v1/releases/latest)**
+
+Python is not required. Double-click `NetScaler.Health.Check.exe`. The first launch takes a few seconds.
+
+![NetScaler Health Check window](docs/window.png)
+
+The report below is from a fictional appliance named `lab-adc`. It is not a customer system. Addresses are shown as the last two octets only.
+
+![Sample report for the fictional lab-adc appliance](docs/report.png)
 
 The tool reads a `collector_*.tgz` (or a directory that contains `ns.conf` and `shell/showcmds.txt`) and compares it with:
 
@@ -17,7 +27,7 @@ Do not commit support bundles, decrypted reports, or passphrases. Those files ar
 
 ## Download
 
-Open the **Releases** tab on this repository and download `NetScaler Health Check.exe`. The other PC does not need Python. Double-click the file to open the window. The first launch unpacks into a temporary folder and takes a few seconds.
+Use **[Releases](https://github.com/PacketPath01/NetScaler_Health_Check_v1/releases/latest)** and download `NetScaler.Health.Check.exe`. The other PC does not need Python. Double-click the file to open the window. The first launch unpacks into a temporary folder and takes a few seconds.
 
 ## Install
 
