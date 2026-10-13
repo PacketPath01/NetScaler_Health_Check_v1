@@ -2,6 +2,8 @@
 
 Drop in a Citrix NetScaler ADC or Gateway support bundle. Get an encrypted report of failing checks, the current Citrix bulletin floors, and a cleanup list. The bundle is not uploaded, and the tool does not change the appliance.
 
+Free to use. No purchase, account, or license file is required.
+
 **[Download the Windows program](https://github.com/PacketPath01/NetScaler_Health_Check_v1/releases/latest)**
 
 Python is not required. Double-click `NetScaler.Health.Check.exe`. The first launch takes a few seconds.
