@@ -4,7 +4,8 @@ Each row is a version and configuration check against the vendor bulletin.
 The remediation is the fixed build named by Citrix. This module does not
 describe how to attack an appliance.
 
-Advisory data was checked against Citrix bulletin summaries on 2026-10-12.
+Advisory data was checked against Citrix bulletin summaries on 2026-11-06.
+CTX697263 remediation versions are the 27 October 2026 update.
 Confirm the bulletin before an upgrade window; later builds supersede these floors.
 """
 
@@ -15,15 +16,17 @@ from dataclasses import dataclass
 from nshc.parse import Appliance
 from nshc.version import NSVersion, V
 
-AS_OF = "2026-10-12"
+AS_OF = "2026-11-06"
 
 # Latest customer-managed floors that close the bulletins below, including
-# CVE-2026-107406 (CTX697191, 9 October 2026).
+# CTX697263 (CVE-2026-109618 and CVE-2026-109619, remediation updated 27 October 2026).
+# CTX697191 keeps its own SAML floor (14.1-73.46 / 13.1-64.29). A build can be
+# past that SAML fix and still be behind this map.
 CURRENT = {
-    (14, 1, False): V(14, 1, 73, 46),
-    (13, 1, False): V(13, 1, 64, 29),
-    (14, 1, True): V(14, 1, 73, 46, fips=True),
-    (13, 1, True): V(13, 1, 37, 283, fips=True, ndcpp=True),
+    (14, 1, False): V(14, 1, 73, 49),
+    (13, 1, False): V(13, 1, 64, 32),
+    (14, 1, True): V(14, 1, 73, 49, fips=True),
+    (13, 1, True): V(13, 1, 37, 286, fips=True, ndcpp=True),
 }
 
 
@@ -74,6 +77,7 @@ def assess(app: Appliance) -> list[Advisory]:
         _ctx697096(version),
         _cve_2026_88779(app, version),
         _cve_2026_107406(app, version),
+        _ctx697263(version),
     ]
     return [row for row in rows if row is not None]
 
@@ -310,7 +314,14 @@ def _cve_2026_107406(app: Appliance, version: NSVersion) -> Advisory:
     elif version.train not in {(13, 1), (14, 1)} and (sp or idp):
         status = "affected"
     elif sp or idp:
-        status = "addressed" if not _older(version, recommended_floor_version(version)) else "affected"
+        saml_floor = _floor_for(
+            version,
+            V(14, 1, 73, 46),
+            V(13, 1, 64, 29),
+            V(14, 1, 73, 46, fips=True),
+            V(13, 1, 37, 283, fips=True, ndcpp=True),
+        )
+        status = "addressed" if saml_floor is not None and not _older(version, saml_floor) else "affected"
     return Advisory(
         "CTX697191",
         ["CVE-2026-107406"],
@@ -322,6 +333,32 @@ def _cve_2026_107406(app: Appliance, version: NSVersion) -> Advisory:
         "The fixed builds are 14.1-73.46 and 13.1-64.29.",
         "14.1-73.46 / 13.1-64.29 or later",
         "SAML IdP on the 73.37-73.41 and 64.23-64.28 bands; SAML SP or IdP on older builds",
+    )
+
+
+def _ctx697263(version: NSVersion) -> Advisory:
+    """CTX697263. ADC and Gateway are in scope on a build older than the fixed release."""
+    floor = _floor_for(
+        version,
+        V(14, 1, 73, 49),
+        V(13, 1, 64, 32),
+        V(14, 1, 73, 49, fips=True),
+        V(13, 1, 37, 286, fips=True, ndcpp=True),
+    )
+    status = _status_for_floor(version, floor, True)
+    if version.train not in {(13, 1), (14, 1)}:
+        status = "affected"
+    return Advisory(
+        "CTX697263",
+        ["CVE-2026-109618", "CVE-2026-109619"],
+        "PHP issues on ADC and Gateway",
+        "CRITICAL" if status == "affected" else "INFO",
+        status,
+        "CTX697263 covers CVE-2026-109618 and CVE-2026-109619 in PHP used by NetScaler ADC and Gateway. "
+        "Citrix marks both products as impacted and urges 14.1-73.49 and 13.1-64.32. "
+        "Confirm the bulletin before the change window.",
+        "14.1-73.49 / 13.1-64.32, 14.1-73.49 FIPS, or 13.1-37.286 FIPS/NDcPP",
+        "NetScaler ADC or Gateway on a build older than the fixed release",
     )
 
 

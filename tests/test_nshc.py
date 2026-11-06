@@ -6,6 +6,7 @@ from pathlib import Path
 
 import tempfile
 
+from nshc.advisories import assess, recommended_build
 from nshc.cli import scan_bundles, summary_text
 from nshc.crypto import CryptoError, decrypt_bytes, encrypt_bytes
 from nshc.evaluate import evaluate
@@ -689,6 +690,193 @@ add service web_be 10.1.1.12 HTTP 80
         self.assertLess(page.index("Connections stay on a server"), page.index("<details"))
         self.assertLess(page.index("<details"), page.index("Passed item"))
         self.assertIn("Checks that do not apply", page)
+
+    def test_mip_classic_saml_and_current_floor(self):
+        show = """
+exec: show ns mode
+	Use Subnet IP                  USNIP                ON
+	Use Source IP                  USIP                 OFF
+ Done
+exec: show ns ip 10.8.0.10
+	IP: 10.8.0.10
+	Type: SNIP
+	management access: Disabled
+ Done
+exec: show ns ip 10.8.0.11
+	IP: 10.8.0.11
+	Type: MIP
+	management access: Enabled
+ Done
+exec: show policy expression
+1)	Name: ns_true
+	Type: CLASSIC
+2)	Name: app_expr
+	Type: CLASSIC
+3)	Name: app_adv
+	Type: ADVANCED
+ Done
+exec: show authentication samlAction
+1)	Name: sp_ok
+	Relaystate Expression: AAA.LOGIN.RELAYSTATE.EQ("https://secret.example/")
+ Done
+exec: show authentication samlIdPProfile
+1)	Name: idp_ok
+	Assertion Consumer Service URL: https://secret.example/cgi/samlauth
+	ACS URL Rule: aaa.login.saml_req_acs_url.EQUALS_ANY("published")
+ Done
+"""
+        nsconf = """
+add policy expression ns_true classic "ns_true"
+add policy expression app_expr classic "REQ.HTTP.URL CONTAINS secret-token"
+add responder policy adv "HTTP.REQ.URL.CONTAINS(\\"abc\\")" DROP
+add authentication localPolicy local1 ns_true
+add authentication policy advpol -rule true -action ALLOW
+add vpn trafficPolicy vpn1 ns_true ALLOW
+add ns ip 10.8.0.11 255.255.255.0 -type MIP -mgmtAccess ENABLED
+"""
+        app = parse_node(CollectedNode(name="lab", files={"nsconfig/ns.conf": nsconf, "shell/showcmds.txt": show}))
+        extras = {item.id: item for item in evaluate(app, [_check("nshc000046")])}
+        self.assertEqual(extras["nshc-x-mip"].status, "review")
+        self.assertEqual(extras["nshc-x-mip"].risk, "MEDIUM")
+        self.assertIn("USNIP is ON", " ".join(extras["nshc-x-mip"].evidence))
+        self.assertNotIn("nshc-x-classic-removed", extras)
+        self.assertEqual(extras["nshc-x-classic"].status, "review")
+        self.assertIn("app_expr", " ".join(extras["nshc-x-classic"].evidence))
+        self.assertNotIn("ns_true", " ".join(extras["nshc-x-classic"].evidence))
+        self.assertEqual(extras["nshc000046"].status, "pass")
+        blob = json.dumps(
+            {
+                "mip": extras["nshc-x-mip"].evidence,
+                "classic": extras["nshc-x-classic"].evidence,
+                "saml": extras["nshc000046"].evidence + [extras["nshc000046"].wording],
+            }
+        )
+        self.assertNotIn("10.8.0.10", blob)
+        self.assertNotIn("10.8.0.11", blob)
+        self.assertNotIn("secret-token", blob)
+        self.assertNotIn("secret.example", blob)
+        self.assertNotIn("REQ.HTTP", blob)
+
+        quiet = """
+exec: show ns mode
+	Use Subnet IP                  USNIP                ON
+ Done
+exec: show ns ip 10.1.1.10
+	IP: 10.1.1.10
+	Type: SNIP
+	management access: Disabled
+ Done
+exec: show policy expression
+1)	Name: ns_true
+	Type: CLASSIC
+ Done
+"""
+        quiet_conf = """
+add responder policy adv "HTTP.REQ.URL.CONTAINS(\\"abc\\")" DROP
+add ns ip 10.9.9.9 255.255.255.0 -type SNIP
+"""
+        quiet_app = parse_node(CollectedNode(name="quiet", files={"nsconfig/ns.conf": quiet_conf, "shell/showcmds.txt": quiet}))
+        quiet_ids = {item.id for item in evaluate(quiet_app, [])}
+        self.assertNotIn("nshc-x-mip", quiet_ids)
+        self.assertNotIn("nshc-x-classic", quiet_ids)
+        self.assertNotIn("nshc-x-classic-removed", quiet_ids)
+
+        legacy = """
+exec: show ns mode
+	Use Subnet IP                  USNIP                ON
+	Use Source IP                  USIP                 OFF
+ Done
+exec: show ns ip 10.2.2.10
+	IP: 10.2.2.10
+	Type: SNIP
+	management access: Disabled
+ Done
+exec: show ns ip 10.2.2.11
+	IP: 10.2.2.11
+	Type: MIP
+	management access: Disabled
+ Done
+"""
+        legacy_app = parse_node(CollectedNode(name="legacy", files={"nsconfig/ns.conf": "", "shell/showcmds.txt": legacy}))
+        legacy_notes = {item.id: item for item in evaluate(legacy_app, [])}
+        self.assertEqual(legacy_notes["nshc-x-mip"].risk, "LOW")
+        self.assertNotIn("10.2.2.11", json.dumps(legacy_notes["nshc-x-mip"].evidence))
+
+        conf_only = parse_node(
+            CollectedNode(
+                name="conf",
+                files={"nsconfig/ns.conf": "add ns ip 10.3.3.3 255.255.255.0 -type MIP\n", "shell/showcmds.txt": ""},
+            )
+        )
+        conf_note = {item.id: item for item in evaluate(conf_only, [])}["nshc-x-mip"]
+        self.assertEqual(conf_note.risk, "LOW")
+        self.assertNotIn("USNIP is OFF", " ".join(conf_note.evidence))
+        self.assertNotIn("10.3.3.3", json.dumps(conf_note.evidence))
+
+        removed = parse_node(
+            CollectedNode(
+                name="removed",
+                files={
+                    "nsconfig/ns.conf": 'add filter policy dropclassic "REQ.HTTP.URL CONTAINS secret-token"\nadd policy patclass oldset\n',
+                    "shell/showcmds.txt": "",
+                },
+            )
+        )
+        removed_notes = {item.id: item for item in evaluate(removed, [])}
+        self.assertEqual(removed_notes["nshc-x-classic-removed"].status, "fail")
+        self.assertNotIn("secret-token", json.dumps(removed_notes["nshc-x-classic-removed"].evidence))
+
+        loose = """
+exec: show authentication samlAction
+1)	Name: sp_bad
+	Logout URL: https://secret.example/relay
+ Done
+exec: show authentication samlIdPProfile
+1)	Name: idp_bad
+	Assertion Consumer Service URL: https://secret.example/cgi/samlauth
+	ACS URL Rule:
+ Done
+"""
+        loose_app = parse_node(CollectedNode(name="loose", files={"nsconfig/ns.conf": "", "shell/showcmds.txt": loose}))
+        saml = {item.id: item for item in evaluate(loose_app, [_check("nshc000046")])}["nshc000046"]
+        self.assertEqual(saml.status, "fail")
+        self.assertIn("sp_bad", " ".join(saml.evidence))
+        self.assertIn("idp_bad", " ".join(saml.evidence))
+        self.assertNotIn("secret.example", json.dumps(saml.evidence))
+
+        current = _versioned("NetScaler NS14.1: Build 73.49.nc")
+        rows = {row.bulletin: row.status for row in assess(current)}
+        self.assertEqual(rows["CTX697263"], "addressed")
+        self.assertNotIn("nshc-adv-upgrade", {item.id for item in evaluate(current, [])})
+
+        behind = _versioned("NetScaler NS14.1: Build 73.46.nc", "add authentication samlIdPProfile idp1\n")
+        rows = {row.bulletin: row.status for row in assess(behind)}
+        self.assertEqual(rows["CTX697191"], "addressed")
+        self.assertEqual(rows["CTX697263"], "affected")
+        self.assertIn("14.1-73.49", recommended_build(behind.version))
+        upgrade = {item.id: item for item in evaluate(behind, [])}["nshc-adv-upgrade"]
+        self.assertIn("CTX697263", " ".join(upgrade.evidence))
+        self.assertNotIn("CTX697191", upgrade.wording)
+
+        older = _versioned("NetScaler NS14.1: Build 73.37.nc", "add authentication samlIdPProfile idp1\n")
+        rows = {row.bulletin: row.status for row in assess(older)}
+        self.assertEqual(rows["CTX697191"], "affected")
+        self.assertEqual(rows["CTX697263"], "affected")
+
+        fips = _versioned("NetScaler NS14.1: Build 73.46.nc FIPS", "add authentication samlIdPProfile idp1\n")
+        self.assertTrue(fips.version.fips)
+        rows = {row.bulletin: row.status for row in assess(fips)}
+        self.assertEqual(rows["CTX697191"], "addressed")
+        self.assertEqual(rows["CTX697263"], "affected")
+
+        train13 = _versioned("NetScaler NS13.1: Build 64.29.nc")
+        self.assertEqual({row.bulletin: row.status for row in assess(train13)}["CTX697263"], "affected")
+        self.assertIn("13.1-64.32", recommended_build(train13.version))
+
+
+def _versioned(build_line: str, nsconf: str = ""):
+    show = f"exec: show ns version\n\t{build_line}\n Done\n"
+    return parse_node(CollectedNode(name="lab", files={"nsconfig/ns.conf": nsconf, "shell/showcmds.txt": show}))
 
 
 if __name__ == "__main__":

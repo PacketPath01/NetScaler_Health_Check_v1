@@ -791,11 +791,11 @@
       "title": "Set Relay State rule in SAML action",
       "details": "NetScaler can act as a SAML IdP (Identity Provider), SP (Service Provider), or both. Incorrect or outdated configurations can expose the system to risks, such as session hijacking.",
       "resources": [
-        "https://docs.netscaler.com/en-us/citrix-adc/current-release/aaa-tm/authentication-methods/saml-authentication/citrix-adc-saml-sp.html"
+        "https://support.citrix.com/external/article/CTX316577/citrix-application-delivery-controller-a.html"
       ],
       "likelihood": 2,
       "impact": 2,
-      "wording": "Ensure that NetScaler appliances are running the latest recommended versions to address potential vulnerabilities in SAML configurations."
+      "wording": "Set relayStateRule on every SAML action so it accepts only the published service URLs, including a trailing slash. Set acsUrlRule on every SAML IdP profile so it accepts only the service-provider ACS URLs. This check reports a missing rule. It does not copy the expression."
     },
     {
       "id": "nshc000047",

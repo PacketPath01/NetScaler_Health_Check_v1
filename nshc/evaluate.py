@@ -9,6 +9,7 @@ from nshc.catalog import CheckDef
 from nshc.cleanup import inventory_notes
 from nshc.hardening import notes as hardening_notes
 from nshc.parse import Appliance, IpDetail
+from nshc.insights import notes as insight_notes
 from nshc.performance import notes as performance_notes
 
 FAIL = "fail"
@@ -290,9 +291,22 @@ def _run(app: Appliance, check_id: str) -> tuple[str, list[str]]:
     if check_id == "nshc000046":
         if not (app.saml_sp or app.saml_idp):
             return NA, ["No SAML SP or IdP object is configured."]
-        if app.saml_relay:
-            return PASS, ["A relay-state setting was found on a SAML object."]
-        return FAIL, [f"SAML is configured ({len(app.saml_sp)} SP, {len(app.saml_idp)} IdP) and no relay-state rule was found."]
+        missing_sp = list(app.saml_sp_missing_relay)
+        missing_idp = list(app.saml_idp_missing_acs)
+        if not missing_sp and not missing_idp:
+            parts = []
+            if app.saml_sp:
+                parts.append(f"A relay-state rule is set on {len(app.saml_sp)} SAML action(s).")
+            if app.saml_idp:
+                parts.append(f"An ACS URL rule is set on {len(app.saml_idp)} SAML IdP profile(s).")
+            parts.append("Confirm each rule lists only the published service URLs. The expression is not copied into this report.")
+            return PASS, parts
+        evidence = []
+        if missing_sp:
+            evidence.append(f"SAML actions with no relay-state rule: {_cap(missing_sp)}.")
+        if missing_idp:
+            evidence.append(f"SAML IdP profiles with no ACS URL rule: {_cap(missing_idp)}.")
+        return FAIL, evidence
     if check_id == "nshc000047":
         return _protocol(app, "SSLv3")
     if check_id == "nshc000048":
@@ -716,7 +730,19 @@ def _extras(app: Appliance) -> list[Outcome]:
         extras.append(_from_note(note))
     for note in performance_notes(app):
         extras.append(_from_note(note))
+    for note in insight_notes(app):
+        extras.append(_from_note(note))
     return extras
+
+
+def _cap(names: list[str], limit: int = 6) -> str:
+    unique = list(dict.fromkeys(names))
+    shown = unique[:limit]
+    extra = len(unique) - len(shown)
+    text = ", ".join(shown)
+    if extra:
+        text += f", and {extra} more"
+    return text
 
 
 def _from_note(note) -> Outcome:

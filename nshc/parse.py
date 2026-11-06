@@ -70,7 +70,10 @@ class Appliance:
     vlans: list[dict[str, object]]
     saml_sp: list[str]
     saml_idp: list[str]
-    saml_relay: bool
+    saml_sp_missing_relay: list[str]
+    saml_idp_missing_acs: list[str]
+    classic: dict
+    config_mip_count: int
     ldap: list[dict[str, str]]
     snmp_alarms: dict[str, str]
     system: dict[str, str]
@@ -152,6 +155,7 @@ def parse_node(node: CollectedNode) -> Appliance:
     ips = _ip_details(show)
     profiles = _ssl_profiles(show)
     syslog_udp, syslog_tcp, syslog_tls = _syslog_transport(nsconf)
+    saml_sp, saml_idp, missing_relay, missing_acs = _saml_rules(show, nsconf)
     return Appliance(
         source=node.name,
         hostname=hostname,
@@ -169,11 +173,12 @@ def parse_node(node: CollectedNode) -> Appliance:
         users=_users(_first(show, "show system user")),
         interfaces=_interfaces(_first(show, "show interface")),
         vlans=_vlans(_first(show, "show vlan")),
-        saml_sp=_names(_first(show, "show authentication samlAction")),
-        saml_idp=_names(_first(show, "show authentication samlIdPProfile")),
-        saml_relay="relay" in (
-            _first(show, "show authentication samlAction") + _first(show, "show authentication samlIdPProfile")
-        ).lower(),
+        saml_sp=saml_sp,
+        saml_idp=saml_idp,
+        saml_sp_missing_relay=missing_relay,
+        saml_idp_missing_acs=missing_acs,
+        classic=_classic_posture(show, nsconf),
+        config_mip_count=_config_mip_count(nsconf),
         ldap=_ldap(_first(show, "show authentication ldapAction")),
         snmp_alarms=_snmp_alarms(_first(show, "show snmp alarm")),
         system=_labeled(_first(show, "show system parameter")),
@@ -1042,6 +1047,204 @@ def _vlans(text: str) -> list[dict[str, object]]:
 
 def _names(text: str) -> list[str]:
     return re.findall(r"(?m)^\d+\)\s+Name:\s*(\S+)", text)
+
+
+def _config_mip_count(nsconf: str) -> int:
+    count = 0
+    for line in nsconf.splitlines():
+        if re.match(r"(?i)add ns ip\s+", line) and re.search(r"(?i)-type\s+MIP\b", line):
+            count += 1
+    return count
+
+
+def _union_names(*groups: list[str]) -> list[str]:
+    found: dict[str, str] = {}
+    for group in groups:
+        for name in group:
+            found.setdefault(name.lower(), name)
+    return list(found.values())
+
+
+def _labeled_rule(chunk: str, label: str) -> bool | None:
+    """True when the labeled rule has a value, False when the label is empty, None when absent.
+
+    The value itself is not returned. SAML rules contain customer URLs.
+    """
+    match = re.search(rf"(?im)^[^\n]*{label}[^\n:]*:\s*(.*?)\s*$", chunk)
+    if not match:
+        return None
+    value = match.group(1).strip().strip('"')
+    if value.upper() in {"", "-", "NONE", "DISABLED", "N/A"}:
+        return False
+    return True
+
+
+def _conf_flag_names(nsconf: str, command: str, flag: str) -> set[str]:
+    found: set[str] = set()
+    pattern = re.compile(rf"(?i)^(?:add|set) authentication {command}\s+(\S+)")
+    for line in nsconf.splitlines():
+        match = pattern.match(line.strip())
+        if match and re.search(rf"(?i){re.escape(flag)}\b", line):
+            found.add(match.group(1).lower())
+    return found
+
+
+def _saml_rules(show: dict[str, list[str]], nsconf: str) -> tuple[list[str], list[str], list[str], list[str]]:
+    """Names only. A SAML action needs a relay-state rule. An IdP profile needs an ACS URL rule."""
+    sp_show = _first(show, "show authentication samlAction")
+    idp_show = _first(show, "show authentication samlIdPProfile")
+    sp_names = _union_names(
+        _names(sp_show),
+        re.findall(r"(?im)^add authentication samlAction\s+(\S+)", nsconf),
+    )
+    idp_names = _union_names(
+        _names(idp_show),
+        re.findall(r"(?im)^add authentication samlIdPProfile\s+(\S+)", nsconf),
+    )
+    relay_in_conf = _conf_flag_names(nsconf, "samlAction", "-relaystateRule")
+    acs_in_conf = _conf_flag_names(nsconf, "samlIdPProfile", "-acsUrlRule")
+    missing_relay = _missing_saml_rule(sp_show, sp_names, r"relay\s*state", relay_in_conf)
+    missing_acs = _missing_saml_rule(idp_show, idp_names, r"\bACS URL Rule", acs_in_conf)
+    return sp_names, idp_names, missing_relay, missing_acs
+
+
+def _missing_saml_rule(show_text: str, names: list[str], label: str, configured: set[str]) -> list[str]:
+    seen: dict[str, bool | None] = {}
+    if show_text.strip():
+        for chunk in re.split(r"(?m)(?=^\d+\)\s+)", show_text):
+            name = _search(r"Name:\s*(\S+)", chunk)
+            if not name:
+                continue
+            seen[name.lower()] = _labeled_rule(chunk, label)
+    missing: list[str] = []
+    for name in names:
+        state = seen.get(name.lower())
+        if state is True:
+            continue
+        if state is False or name.lower() not in configured:
+            missing.append(name)
+    return missing
+
+
+_CLASSIC_RULE = re.compile(
+    r"(?i)(?:^|[^A-Za-z0-9_.])(?:"
+    r"ns_true|ns_false|"
+    r"REQ\.HTTP|RES\.HTTP|REQ\.TCP|RES\.TCP|"
+    r"REQ\.IP\.|RES\.IP\.|REQ\.SSL|"
+    r"SOURCEIP|DESTIP|"
+    r"SYS\.EVAL_CLASSIC_EXPR"
+    r")\b"
+)
+_AUTH_LINE = re.compile(
+    r"(?i)^add authentication (localPolicy|ldapPolicy|radiusPolicy|tacacsPolicy|certPolicy|negotiatePolicy)\s+(\S+)"
+)
+_FILTER_LINE = re.compile(r"(?i)^add filter (policy|action)\s+(\S+)")
+_PATCLASS_LINE = re.compile(r"(?i)^add policy patclass\s+(\S+)")
+_EXPR_LINE = re.compile(r"(?i)^add policy expression\s+(\S+)\s+(\S+)")
+_FEATURE_POLICY = re.compile(
+    r"(?i)^add (responder|rewrite|cs|cr|cache|cmp|appfw|ssl|authorization) policy\s+(\S+)\s+(.*)$"
+)
+_VPN_POLICY = re.compile(r"(?i)^add vpn (\w*Policy)\s+(\S+)\s+(.*)$")
+_ADV_AUTH = re.compile(r"(?i)^add authentication policy\s+(\S+)\s+(.*)$")
+
+
+def _first_arg(text: str) -> str | None:
+    text = text.strip()
+    if not text:
+        return None
+    if text[0] != '"':
+        return text.split()[0]
+    chars: list[str] = []
+    index = 1
+    while index < len(text):
+        char = text[index]
+        if char == "\\" and index + 1 < len(text):
+            chars.append(text[index + 1])
+            index += 2
+            continue
+        if char == '"':
+            return "".join(chars)
+        chars.append(char)
+        index += 1
+    return None
+
+
+def _rule_arg(rest: str) -> str | None:
+    flagged = re.search(r"(?i)(?:^|\s)-rule\s+", rest)
+    if flagged:
+        rest = rest[flagged.end() :]
+    return _first_arg(rest)
+
+
+def _classic_posture(show: dict[str, list[str]], nsconf: str) -> dict[str, list[str]]:
+    """Custom classic names and deprecated commands. Expression text is not stored."""
+    expressions: list[str] = []
+    removed: list[str] = []
+    policies: list[str] = []
+    seen_expr: set[str] = set()
+    seen_removed: set[str] = set()
+    seen_policy: set[str] = set()
+
+    def add_expr(name: str) -> None:
+        if name.lower().startswith("ns_") or name.lower() in seen_expr:
+            return
+        seen_expr.add(name.lower())
+        expressions.append(name)
+
+    show_expr = _first(show, "show policy expression")
+    for chunk in re.split(r"(?m)(?=^\d+\))", show_expr):
+        name = _search(r"Name:\s*(\S+)", chunk)
+        kind = _search(r"Type\s*:\s*(\S+)", chunk)
+        if name and kind and kind.upper() == "CLASSIC":
+            add_expr(name)
+
+    for raw in nsconf.splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#"):
+            continue
+        filt = _FILTER_LINE.match(line)
+        if filt:
+            label = f"filter {filt.group(1).lower()} {filt.group(2)}"
+            if label.lower() not in seen_removed:
+                seen_removed.add(label.lower())
+                removed.append(label)
+            continue
+        pat = _PATCLASS_LINE.match(line)
+        if pat:
+            label = f"patclass {pat.group(1)}"
+            if label.lower() not in seen_removed:
+                seen_removed.add(label.lower())
+                removed.append(label)
+            continue
+        auth = _AUTH_LINE.match(line)
+        if auth:
+            label = f"{auth.group(1)} {auth.group(2)}"
+            if label.lower() not in seen_policy:
+                seen_policy.add(label.lower())
+                policies.append(label)
+            continue
+        expr = _EXPR_LINE.match(line)
+        if expr and expr.group(2).lower() == "classic":
+            add_expr(expr.group(1))
+            continue
+        feature = _FEATURE_POLICY.match(line)
+        vpn = _VPN_POLICY.match(line)
+        advanced = _ADV_AUTH.match(line)
+        if feature:
+            label = f"{feature.group(1).lower()} policy {feature.group(2)}"
+            rule = _rule_arg(feature.group(3))
+        elif vpn:
+            label = f"{vpn.group(1)} {vpn.group(2)}"
+            rule = _rule_arg(vpn.group(3))
+        elif advanced:
+            label = f"authentication policy {advanced.group(1)}"
+            rule = _rule_arg(advanced.group(2))
+        else:
+            continue
+        if rule and _CLASSIC_RULE.search(rule) and label.lower() not in seen_policy:
+            seen_policy.add(label.lower())
+            policies.append(label)
+    return {"expressions": expressions, "removed": removed, "policies": policies}
 
 
 def _ldap(text: str) -> list[dict[str, str]]:

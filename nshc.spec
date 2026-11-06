@@ -18,6 +18,7 @@ a = Analysis(
         "nshc.catalog",
         "nshc.advisories",
         "nshc.performance",
+        "nshc.insights",
     ],
     hookspath=[],
     hooksconfig={},
